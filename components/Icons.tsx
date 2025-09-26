@@ -127,3 +127,15 @@ export const HeartIcon: React.FC<IconProps> = ({ className }) => (
         <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 016.364 0L12 7.5l1.318-1.182a4.5 4.5 0 116.364 6.364L12 20.25l-7.318-7.318a4.5 4.5 0 010-6.364z" />
     </svg>
 );
+
+export const FilePdfIcon: React.FC<IconProps> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 24 24" fill="currentColor">
+        <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zM9.5 15.5c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5V13c0-.83.67-1.5 1.5-1.5s1.5.67 1.5 1.5v2.5zm4-2.5c.83 0 1.5.67 1.5 1.5v1h-3v-1c0-.83.67-1.5 1.5-1.5zm-2.5-4H15v5h-4V9z" />
+    </svg>
+);
+
+export const FileDocIcon: React.FC<IconProps> = ({ className }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 24 24" fill="currentColor">
+        <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zM15 18H9v-2h6v2zm0-4H9v-2h6v2zm-3-4H9V8h3v2z" />
+    </svg>
+);

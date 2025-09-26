@@ -80,6 +80,14 @@ export interface ForumThread {
     posts: ForumPost[];
 }
 
+export interface PolicyDocument {
+    id: string;
+    title: string;
+    type: 'PDF' | 'DOCX';
+    summary: string; // This will be used as the context for the AI
+    lastUpdated: string; // e.g., "Month Day, YYYY"
+}
+
 export interface DashboardData {
     announcements: Announcement[];
     documents: DocumentItem[];
@@ -87,6 +95,7 @@ export interface DashboardData {
     holidayRequests: HolidayRequest[];
     suggestions: Suggestion[];
     forumThreads: ForumThread[];
+    policyDocuments: PolicyDocument[];
 }
 
 export interface SearchResult {

@@ -137,7 +137,7 @@ const App: React.FC = () => {
         case 'forum':
             return <ForumPage initialThreads={data.forumThreads} />;
         case 'policies':
-            return <PoliciesPage />;
+            return <PoliciesPage policies={data.policyDocuments || []} />;
         case 'team':
             return <TeamDirectoryPage teamMembers={teamMembers || []} />;
         case 'email':

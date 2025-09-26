@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import type { DashboardData, SearchResult, TeamMember } from '../types';
+import type { DashboardData, SearchResult, TeamMember, PolicyDocument } from '../types';
 import { DocumentType } from '../types';
 
 // --- Vercel Deployment Note ---
@@ -138,9 +138,24 @@ const responseSchema = {
                 },
                 required: ["id", "title", "authorName", "authorAvatarUrl", "createdAt", "postCount", "lastReply", "posts"]
             }
+        },
+        policyDocuments: {
+            type: Type.ARRAY,
+            description: "A list of 5 corporate policy documents.",
+            items: {
+                type: Type.OBJECT,
+                properties: {
+                     id: { type: Type.STRING, description: "Unique ID for the policy document." },
+                     title: { type: Type.STRING, description: "The title of the policy document, including extension (e.g., 'Remote Work Policy.pdf')." },
+                     type: { type: Type.STRING, enum: ['PDF', 'DOCX'], description: "The file type." },
+                     summary: { type: Type.STRING, description: "A detailed summary of the policy document's content, 2-3 paragraphs long. This will be used as the knowledge base for an AI assistant." },
+                     lastUpdated: { type: Type.STRING, description: "The date the document was last updated in 'Month Day, YYYY' format." }
+                },
+                required: ["id", "title", "type", "summary", "lastUpdated"]
+            }
         }
     },
-    required: ["announcements", "documents", "emails", "holidayRequests", "suggestions", "forumThreads"]
+    required: ["announcements", "documents", "emails", "holidayRequests", "suggestions", "forumThreads", "policyDocuments"]
 };
 
 export const generateDashboardContent = async (): Promise<DashboardData> => {
@@ -152,7 +167,7 @@ export const generateDashboardContent = async (): Promise<DashboardData> => {
     try {
         const response = await aiClient.models.generateContent({
             model: "gemini-2.5-flash",
-            contents: "Generate realistic mock data for a corporate intranet dashboard for a user named Alex Chen. The company is a mid-sized tech firm. Include company announcements, recent documents (owned by or shared with Alex Chen), corporate emails, approved team holiday/sick leave requests, a few user-submitted suggestions, and some active forum discussion threads.",
+            contents: "Generate realistic mock data for a corporate intranet dashboard for a user named Alex Chen. The company is a mid-sized tech firm. Include company announcements, recent documents (owned by or shared with Alex Chen), corporate emails, approved team holiday/sick leave requests, user-submitted suggestions, active forum discussion threads, and a set of corporate policy documents with detailed summaries.",
             config: {
                 responseMimeType: "application/json",
                 responseSchema: responseSchema,
@@ -163,7 +178,7 @@ export const generateDashboardContent = async (): Promise<DashboardData> => {
         const parsedData = JSON.parse(jsonText);
 
         // Basic validation
-        if (!parsedData.announcements || !parsedData.documents || !parsedData.emails || !parsedData.holidayRequests || !parsedData.suggestions || !parsedData.forumThreads) {
+        if (!parsedData.announcements || !parsedData.documents || !parsedData.emails || !parsedData.holidayRequests || !parsedData.suggestions || !parsedData.forumThreads || !parsedData.policyDocuments) {
             throw new Error("Invalid data structure received from API.");
         }
         
@@ -226,18 +241,30 @@ export const performSearch = async (query: string, data: DashboardData): Promise
     }
 };
 
-export const askPolicyQuestion = async (question: string): Promise<string> => {
+export const askPolicyQuestion = async (question: string, policies: PolicyDocument[]): Promise<string> => {
     const aiClient = getAiClient();
     if (!aiClient) {
         throw new Error("API key not configured.");
     }
 
+    // Prepare the context from the policy documents
+    const context = policies.map(p => `Document Title: ${p.title}\nContent:\n${p.summary}`).join('\n\n---\n\n');
+    
+    const prompt = `
+        Context from company policy documents:
+        ---
+        ${context}
+        ---
+
+        User's question: "${question}"
+    `;
+
     try {
         const response = await aiClient.models.generateContent({
             model: "gemini-2.5-flash",
-            contents: question,
+            contents: prompt,
             config: {
-                systemInstruction: "You are a helpful and friendly AI assistant for the company Italchimici. Your role is to answer employee questions about company policies and procedures. Provide clear, concise answers based on standard corporate policies. If you don't know the answer, say that you don't have information on that topic and recommend contacting HR. Always start your first response on a new session with a friendly welcome. End your responses by reminding the user to confirm critical information with their manager or the HR department.",
+                systemInstruction: "You are a helpful and friendly AI assistant for the company Italchimici. Your role is to answer employee questions about company policies and procedures. You MUST base your answers exclusively on the provided context from the company policy documents. Do not use any external knowledge. If the answer cannot be found in the provided documents, you MUST state that you don't have information on that topic based on the available documents and recommend contacting HR. If this is the first message in a conversation, start with a friendly welcome. For all other answers, directly address the user's question. Conclude your responses by suggesting the user consult the full document or contact HR for definitive guidance.",
             },
         });
         
