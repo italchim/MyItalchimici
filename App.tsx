@@ -12,11 +12,13 @@ import { LoadingSpinner } from './components/LoadingSpinner';
 import { SearchResultsPage } from './components/SearchResultsPage';
 import { TeamDirectoryPage } from './components/TeamDirectoryPage';
 import { EmailPage } from './components/EmailPage';
-import type { DashboardData, View, SearchResult, TeamMember } from './types';
+import { LoginPage } from './components/LoginPage';
+import type { DashboardData, View, SearchResult, TeamMember, PolicyDocument } from './types';
 import { DocumentType } from './types';
 import { generateDashboardContent, performSearch, generateTeamDirectory } from './services/geminiService';
 
 const App: React.FC = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -30,6 +32,8 @@ const App: React.FC = () => {
   const [loadingTeam, setLoadingTeam] = useState<boolean>(false);
 
   useEffect(() => {
+    if (!isAuthenticated) return;
+
     const fetchData = async () => {
       try {
         setLoading(true);
@@ -49,9 +53,11 @@ const App: React.FC = () => {
     };
 
     fetchData();
-  }, []);
+  }, [isAuthenticated]);
 
   useEffect(() => {
+    if (!isAuthenticated) return;
+
     const fetchTeamData = async () => {
         if (activeView === 'team' && !teamMembers) {
             try {
@@ -72,7 +78,7 @@ const App: React.FC = () => {
         }
     };
     fetchTeamData();
-  }, [activeView, teamMembers]);
+  }, [activeView, teamMembers, isAuthenticated]);
 
 
   const handleSearch = async (query: string) => {
@@ -96,6 +102,24 @@ const App: React.FC = () => {
         setIsSearching(false);
     }
   };
+
+  const handleUpdatePolicies = (newPolicies: PolicyDocument[]) => {
+      setData(currentData => {
+          if (!currentData) return null;
+          return { ...currentData, policyDocuments: newPolicies };
+      });
+  };
+  
+  const handleLoginSuccess = () => {
+      setIsAuthenticated(true);
+  };
+
+  const handleLogout = () => {
+      setIsAuthenticated(false);
+      setData(null);
+      setTeamMembers(null);
+      setActiveView('dashboard');
+  }
 
   const renderContent = () => {
     if (isSearching || loadingTeam) {
@@ -137,7 +161,7 @@ const App: React.FC = () => {
         case 'forum':
             return <ForumPage initialThreads={data.forumThreads} />;
         case 'policies':
-            return <PoliciesPage policies={data.policyDocuments || []} />;
+            return <PoliciesPage policies={data.policyDocuments || []} onPoliciesUpdate={handleUpdatePolicies} />;
         case 'team':
             return <TeamDirectoryPage teamMembers={teamMembers || []} />;
         case 'email':
@@ -151,11 +175,15 @@ const App: React.FC = () => {
     return null;
   };
 
+  if (!isAuthenticated) {
+    return <LoginPage onLoginSuccess={handleLoginSuccess} />;
+  }
+
   return (
     <div className="flex h-screen bg-gray-50 text-gray-800">
       <Sidebar activeView={activeView} setActiveView={setActiveView} />
       <div className="flex flex-col flex-1 overflow-hidden">
-        <Header onSearch={handleSearch} />
+        <Header onSearch={handleSearch} onLogout={handleLogout} activeView={activeView} />
         <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-4 md:p-8">
           {renderContent()}
         </main>

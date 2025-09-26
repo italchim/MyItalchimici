@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { askPolicyQuestion } from '../services/geminiService';
 import type { ChatMessage, PolicyDocument } from '../types';
-import { PolicyIcon, SendIcon, FilePdfIcon, FileDocIcon } from './Icons';
+import { PolicyIcon, SendIcon, FilePdfIcon, FileDocIcon, CloudUploadIcon } from './Icons';
 import { WidgetCard } from './WidgetCard';
 
 
@@ -13,27 +13,21 @@ const TypingIndicator: React.FC = () => (
     </div>
 );
 
-const DocumentLibrary: React.FC<{ policies: PolicyDocument[] }> = ({ policies }) => (
-    <WidgetCard title="Document Library" icon={<PolicyIcon className="h-6 w-6 text-gray-700" />} showViewAll={false}>
-        <div className="space-y-3">
-            {policies.map(doc => (
-                <div key={doc.id} className="flex items-center p-2 -m-2 rounded-lg hover:bg-gray-100 cursor-pointer">
-                    {doc.type === 'PDF' ? <FilePdfIcon className="h-8 w-8 text-red-600 shrink-0" /> : <FileDocIcon className="h-8 w-8 text-blue-600 shrink-0" />}
-                    <div className="ml-3 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">{doc.title}</p>
-                        <p className="text-xs text-gray-500">Last updated: {doc.lastUpdated}</p>
-                    </div>
-                </div>
-            ))}
-        </div>
-    </WidgetCard>
-);
+interface PoliciesPageProps {
+    policies: PolicyDocument[];
+    onPoliciesUpdate: (newPolicies: PolicyDocument[]) => void;
+}
 
-export const PoliciesPage: React.FC<{ policies: PolicyDocument[] }> = ({ policies }) => {
+export const PoliciesPage: React.FC<PoliciesPageProps> = ({ policies, onPoliciesUpdate }) => {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const messagesEndRef = useRef<null | HTMLDivElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const [summaryText, setSummaryText] = useState('');
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -42,10 +36,9 @@ export const PoliciesPage: React.FC<{ policies: PolicyDocument[] }> = ({ policie
     useEffect(scrollToBottom, [messages]);
 
     useEffect(() => {
-        // Initial welcome message from the AI
         const fetchWelcomeMessage = async () => {
+            if (messages.length > 0) return; // Only fetch welcome message once
             try {
-                // Pass an introductory question and the policies context to get a relevant welcome message.
                 const welcomeText = await askPolicyQuestion("Hello, what can you do?", policies);
                 setMessages([{ id: 'welcome', sender: 'ai', text: welcomeText }]);
             } catch (error) {
@@ -57,6 +50,9 @@ export const PoliciesPage: React.FC<{ policies: PolicyDocument[] }> = ({ policie
         };
         if (policies.length > 0) {
            fetchWelcomeMessage();
+        } else {
+            setIsLoading(false);
+            setMessages([{ id: 'no-docs', sender: 'ai', text: 'Welcome! The document library is currently empty. Please upload a policy document to begin.' }])
         }
     }, [policies]);
 
@@ -80,15 +76,64 @@ export const PoliciesPage: React.FC<{ policies: PolicyDocument[] }> = ({ policie
             setIsLoading(false);
         }
     };
+    
+    const handleFileUploadClick = () => fileInputRef.current?.click();
+
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            setSelectedFile(file);
+            setSummaryText('');
+            setIsModalOpen(true);
+        }
+        if(event.target) event.target.value = ''; // Allow re-uploading the same file
+    };
+
+    const handleModalClose = () => {
+        setIsModalOpen(false);
+        setSelectedFile(null);
+        setSummaryText('');
+    };
+
+    const handleSaveDocument = () => {
+        if (!selectedFile || !summaryText.trim()) {
+            alert("Please provide a summary for the document.");
+            return;
+        }
+        const newDocument: PolicyDocument = {
+            id: `doc-${Date.now()}`,
+            title: selectedFile.name,
+            type: selectedFile.name.toLowerCase().endsWith('.pdf') ? 'PDF' : 'DOCX',
+            summary: summaryText,
+            lastUpdated: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+        };
+        onPoliciesUpdate([...policies, newDocument]);
+        handleModalClose();
+    };
 
     const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.key === 'Enter' && !isLoading) {
-            handleSend();
-        }
+        if (e.key === 'Enter' && !isLoading) handleSend();
     };
+
+    const uploadButton = (
+        <button
+            onClick={handleFileUploadClick}
+            className="flex items-center space-x-2 text-sm font-medium text-blue-600 hover:text-blue-800 disabled:text-gray-400 disabled:cursor-not-allowed transition-colors"
+        >
+            <CloudUploadIcon className="h-5 w-5" />
+            <span>Upload</span>
+        </button>
+    );
 
     return (
         <div className="container mx-auto animate-fade-in">
+             <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                className="hidden"
+                accept=".pdf,.docx,.doc"
+            />
             <div className="mb-8">
                 <h1 className="text-3xl font-bold text-gray-900">Policies & Procedures</h1>
                 <p className="text-gray-500">Browse the library or ask the AI assistant for help.</p>
@@ -96,7 +141,25 @@ export const PoliciesPage: React.FC<{ policies: PolicyDocument[] }> = ({ policie
             
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-200px)]">
                 <div className="lg:col-span-1">
-                    <DocumentLibrary policies={policies} />
+                    <WidgetCard title="Document Library" icon={<PolicyIcon className="h-6 w-6 text-gray-700" />} showViewAll={false} headerAction={uploadButton}>
+                        <div className="space-y-3">
+                            {policies.map(doc => (
+                                <div key={doc.id} className="flex items-center p-2 -m-2 rounded-lg hover:bg-gray-100 cursor-pointer">
+                                    {doc.type === 'PDF' ? <FilePdfIcon className="h-8 w-8 text-red-600 shrink-0" /> : <FileDocIcon className="h-8 w-8 text-blue-600 shrink-0" />}
+                                    <div className="ml-3 min-w-0">
+                                        <p className="text-sm font-medium text-gray-900 truncate">{doc.title}</p>
+                                        <p className="text-xs text-gray-500">Last updated: {doc.lastUpdated}</p>
+                                    </div>
+                                </div>
+                            ))}
+                            {policies.length === 0 && (
+                                <div className="text-center py-8 text-gray-500">
+                                    <p>No documents found.</p>
+                                    <p className="text-sm">Click "Upload" to add a new policy.</p>
+                                </div>
+                            )}
+                        </div>
+                    </WidgetCard>
                 </div>
 
                 <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col overflow-hidden">
@@ -112,7 +175,7 @@ export const PoliciesPage: React.FC<{ policies: PolicyDocument[] }> = ({ policie
                                 </div>
                             </div>
                         ))}
-                        {isLoading && (
+                        {isLoading && messages.length > 0 && (
                              <div className="flex items-end gap-2 justify-start">
                                 <div className="flex-shrink-0 bg-gray-200 h-8 w-8 rounded-full flex items-center justify-center"><PolicyIcon className="h-5 w-5 text-gray-600"/></div>
                                 <div className="bg-gray-100 rounded-xl">
@@ -147,15 +210,30 @@ export const PoliciesPage: React.FC<{ policies: PolicyDocument[] }> = ({ policie
                     </div>
                 </div>
             </div>
-
+            {isModalOpen && selectedFile && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 animate-fade-in-fast">
+                    <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg m-4">
+                        <h2 className="text-xl font-bold text-gray-800 mb-2">Upload New Policy</h2>
+                        <p className="text-sm text-gray-600 mb-4">Provide a summary for <span className="font-medium text-gray-900">{selectedFile.name}</span>. The AI will use this text to answer questions.</p>
+                        <textarea
+                            value={summaryText}
+                            onChange={(e) => setSummaryText(e.target.value)}
+                            rows={8}
+                            className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            placeholder="Paste or write a detailed summary of the document here..."
+                        />
+                        <div className="mt-6 flex justify-end space-x-3">
+                            <button onClick={handleModalClose} className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">Cancel</button>
+                            <button onClick={handleSaveDocument} className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50" disabled={!summaryText.trim()}>Save Document</button>
+                        </div>
+                    </div>
+                </div>
+            )}
              <style>{`
-                @keyframes fade-in {
-                from { opacity: 0; transform: translateY(10px); }
-                to { opacity: 1; transform: translateY(0); }
-                }
-                .animate-fade-in {
-                animation: fade-in 0.5s ease-out forwards;
-                }
+                @keyframes fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+                .animate-fade-in { animation: fade-in 0.5s ease-out forwards; }
+                @keyframes fade-in-fast { from { opacity: 0; } to { opacity: 1; } }
+                .animate-fade-in-fast { animation: fade-in-fast 0.2s ease-out forwards; }
             `}</style>
         </div>
     );
