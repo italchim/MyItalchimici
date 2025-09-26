@@ -12,8 +12,9 @@ import { LoadingSpinner } from './components/LoadingSpinner';
 import { SearchResultsPage } from './components/SearchResultsPage';
 import { TeamDirectoryPage } from './components/TeamDirectoryPage';
 import { EmailPage } from './components/EmailPage';
+import { TasksPage } from './components/TasksPage';
 import { LoginPage } from './components/LoginPage';
-import type { DashboardData, View, SearchResult, TeamMember, PolicyDocument } from './types';
+import type { DashboardData, View, SearchResult, TeamMember, PolicyDocument, Task } from './types';
 import { DocumentType } from './types';
 import { generateDashboardContent, performSearch, generateTeamDirectory } from './services/geminiService';
 
@@ -109,6 +110,13 @@ const App: React.FC = () => {
           return { ...currentData, policyDocuments: newPolicies };
       });
   };
+
+  const handleUpdateTasks = (newTasks: Task[]) => {
+      setData(currentData => {
+          if (!currentData) return null;
+          return { ...currentData, tasks: newTasks };
+      });
+  };
   
   const handleLoginSuccess = () => {
       setIsAuthenticated(true);
@@ -166,6 +174,8 @@ const App: React.FC = () => {
             return <TeamDirectoryPage teamMembers={teamMembers || []} />;
         case 'email':
             return <EmailPage emails={data.emails} />;
+        case 'tasks':
+            return <TasksPage initialTasks={data.tasks || []} onTasksUpdate={handleUpdateTasks} />;
         case 'search':
             return <SearchResultsPage query={searchQuery} results={searchResults} setActiveView={setActiveView} />;
         default:

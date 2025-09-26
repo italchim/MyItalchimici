@@ -153,9 +153,26 @@ const responseSchema = {
                 },
                 required: ["id", "title", "type", "summary", "lastUpdated"]
             }
+        },
+        tasks: {
+            type: Type.ARRAY,
+            description: "A list of 10 tasks. Some created by 'Alex Chen' and assigned to others, and some created by others and assigned to 'Alex Chen'. Ensure a mix of 'Pending' and 'Completed' statuses.",
+            items: {
+                type: Type.OBJECT,
+                properties: {
+                    id: { type: Type.STRING, description: "Unique identifier for the task." },
+                    title: { type: Type.STRING, description: "The title of the task." },
+                    description: { type: Type.STRING, description: "A brief description of the task." },
+                    dueDate: { type: Type.STRING, description: "The due date in YYYY-MM-DD format." },
+                    status: { type: Type.STRING, enum: ['Pending', 'Completed'], description: "The current status of the task." },
+                    createdBy: { type: Type.STRING, description: "The name of the employee who created the task." },
+                    assignedTo: { type: Type.STRING, description: "The name of the employee the task is assigned to." }
+                },
+                required: ["id", "title", "description", "dueDate", "status", "createdBy", "assignedTo"]
+            }
         }
     },
-    required: ["announcements", "documents", "emails", "holidayRequests", "suggestions", "forumThreads", "policyDocuments"]
+    required: ["announcements", "documents", "emails", "holidayRequests", "suggestions", "forumThreads", "policyDocuments", "tasks"]
 };
 
 export const generateDashboardContent = async (): Promise<DashboardData> => {
@@ -167,7 +184,7 @@ export const generateDashboardContent = async (): Promise<DashboardData> => {
     try {
         const response = await aiClient.models.generateContent({
             model: "gemini-2.5-flash",
-            contents: "Generate realistic mock data for a corporate intranet dashboard for a user named Alex Chen. The company is a mid-sized tech firm. Include company announcements, recent documents (owned by or shared with Alex Chen), corporate emails, approved team holiday/sick leave requests, user-submitted suggestions, active forum discussion threads, and a set of corporate policy documents with detailed summaries.",
+            contents: "Generate realistic mock data for a corporate intranet dashboard for a user named Alex Chen. The company is a mid-sized tech firm. Include company announcements, recent documents (owned by or shared with Alex Chen), corporate emails, approved team holiday/sick leave requests, user-submitted suggestions, active forum discussion threads, a set of corporate policy documents with detailed summaries, and a list of tasks assigned to and created by Alex Chen.",
             config: {
                 responseMimeType: "application/json",
                 responseSchema: responseSchema,
@@ -178,7 +195,7 @@ export const generateDashboardContent = async (): Promise<DashboardData> => {
         const parsedData = JSON.parse(jsonText);
 
         // Basic validation
-        if (!parsedData.announcements || !parsedData.documents || !parsedData.emails || !parsedData.holidayRequests || !parsedData.suggestions || !parsedData.forumThreads || !parsedData.policyDocuments) {
+        if (!parsedData.announcements || !parsedData.documents || !parsedData.emails || !parsedData.holidayRequests || !parsedData.suggestions || !parsedData.forumThreads || !parsedData.policyDocuments || !parsedData.tasks) {
             throw new Error("Invalid data structure received from API.");
         }
         
@@ -197,6 +214,7 @@ const searchResponseSchema = {
         documents: { type: Type.ARRAY, items: { type: Type.OBJECT } },
         emails: { type: Type.ARRAY, items: { type: Type.OBJECT } },
         forumThreads: { type: Type.ARRAY, items: { type: Type.OBJECT } },
+        tasks: { type: Type.ARRAY, items: { type: Type.OBJECT } },
     }
 };
 
@@ -234,6 +252,7 @@ export const performSearch = async (query: string, data: DashboardData): Promise
             documents: parsedData.documents || [],
             emails: parsedData.emails || [],
             forumThreads: parsedData.forumThreads || [],
+            tasks: parsedData.tasks || [],
         } as SearchResult;
     } catch (error) {
         console.error("Error performing search:", error);

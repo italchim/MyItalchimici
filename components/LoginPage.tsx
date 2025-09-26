@@ -15,7 +15,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ onLoginSuccess }) => {
                     <h1 className="mt-4 text-2xl font-bold text-center text-gray-900">
                         MyItalchimici Intra
                     </h1>
-                    <p className="mt-1 text-sm text-gray-500">Sign in with your corporate account</p>
+                    <p className="mt-4 text-sm text-gray-500">Sign in with your corporate account</p>
                 </div>
                 
                 <div>

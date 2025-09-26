@@ -3,7 +3,7 @@ export enum DocumentType {
     SHEETS = 'Google Sheets',
 }
 
-export type View = 'dashboard' | 'holidays' | 'documents' | 'spreadsheets' | 'suggestions' | 'forum' | 'policies' | 'search' | 'team' | 'email';
+export type View = 'dashboard' | 'holidays' | 'documents' | 'spreadsheets' | 'suggestions' | 'forum' | 'policies' | 'search' | 'team' | 'email' | 'tasks';
 
 export interface Announcement {
     id: string;
@@ -88,6 +88,18 @@ export interface PolicyDocument {
     lastUpdated: string; // e.g., "Month Day, YYYY"
 }
 
+export type TaskStatus = 'Pending' | 'Completed';
+
+export interface Task {
+    id: string;
+    title: string;
+    description: string;
+    dueDate: string; // YYYY-MM-DD
+    status: TaskStatus;
+    createdBy: string;
+    assignedTo: string;
+}
+
 export interface DashboardData {
     announcements: Announcement[];
     documents: DocumentItem[];
@@ -96,6 +108,7 @@ export interface DashboardData {
     suggestions: Suggestion[];
     forumThreads: ForumThread[];
     policyDocuments: PolicyDocument[];
+    tasks: Task[];
 }
 
 export interface SearchResult {
@@ -103,6 +116,7 @@ export interface SearchResult {
     documents: DocumentItem[];
     emails: Email[];
     forumThreads: ForumThread[];
+    tasks: Task[];
 }
 
 export interface ChatMessage {

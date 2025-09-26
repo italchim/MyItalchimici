@@ -1,5 +1,5 @@
 import React from 'react';
-import { HomeIcon, DocsIcon, SheetsIcon, GmailIcon, TeamIcon, SettingsIcon, LogoIcon, CalendarIcon, LightbulbIcon, ForumIcon, PolicyIcon } from './Icons';
+import { HomeIcon, DocsIcon, SheetsIcon, GmailIcon, TeamIcon, SettingsIcon, LogoIcon, CalendarIcon, LightbulbIcon, ForumIcon, PolicyIcon, TasksIcon } from './Icons';
 import type { View } from '../types';
 
 interface NavItemProps {
@@ -43,6 +43,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) =
         <NavItem icon={<PolicyIcon className="h-5 w-5" />} label="Politiche e Procedure" active={activeView === 'policies'} onClick={() => setActiveView('policies')} />
         <NavItem icon={<TeamIcon className="h-5 w-5" />} label="Team Directory" active={activeView === 'team'} onClick={() => setActiveView('team')} />
         <NavItem icon={<GmailIcon className="h-5 w-5" />} label="Email" active={activeView === 'email'} onClick={() => setActiveView('email')} />
+        <NavItem icon={<TasksIcon className="h-5 w-5" />} label="Open Tasks" active={activeView === 'tasks'} onClick={() => setActiveView('tasks')} />
       </nav>
       <div className="p-4 border-t border-gray-200">
         <NavItem icon={<SettingsIcon className="h-5 w-5" />} label="Settings" onClick={() => {}} />
