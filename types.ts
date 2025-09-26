@@ -3,7 +3,7 @@ export enum DocumentType {
     SHEETS = 'Google Sheets',
 }
 
-export type View = 'dashboard' | 'holidays' | 'documents' | 'spreadsheets' | 'suggestions' | 'forum' | 'policies';
+export type View = 'dashboard' | 'holidays' | 'documents' | 'spreadsheets' | 'suggestions' | 'forum' | 'policies' | 'search' | 'team';
 
 export interface Announcement {
     id: string;
@@ -40,7 +40,7 @@ export interface HolidayRequest {
 }
 
 export interface Suggestion {
-    id: string;
+    id:string;
     area: 'HR' | 'IT' | 'Office Management' | 'Productivity';
     suggestion: string;
     motivation: string;
@@ -53,6 +53,9 @@ export interface TeamMember {
     name: string;
     role: string;
     avatarUrl: string;
+    department: 'Engineering' | 'Product' | 'Design' | 'Marketing' | 'HR';
+    email: string;
+    phone: string;
 }
 
 export interface ForumPost {
@@ -84,4 +87,17 @@ export interface DashboardData {
     holidayRequests: HolidayRequest[];
     suggestions: Suggestion[];
     forumThreads: ForumThread[];
+}
+
+export interface SearchResult {
+    announcements: Announcement[];
+    documents: DocumentItem[];
+    emails: Email[];
+    forumThreads: ForumThread[];
+}
+
+export interface ChatMessage {
+    id: string;
+    text: string;
+    sender: 'user' | 'ai';
 }

@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import type { HolidayRequest, LeaveType } from '../types';
 import { WidgetCard } from './WidgetCard';
-import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon } from './Icons';
+import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon, BriefcaseIcon, HeartIcon } from './Icons';
 
 const today = new Date();
 today.setHours(0, 0, 0, 0);
@@ -106,7 +106,7 @@ const RequestForm: React.FC<{ onSubmit: (req: HolidayRequest) => void }> = ({ on
     }
 
     return (
-        <WidgetCard title="Richiesta Ferie/Assenze" icon={<CalendarIcon className="h-6 w-6 text-blue-500" />}>
+        <WidgetCard title="Richiesta Ferie/Assenze" icon={<CalendarIcon className="h-6 w-6 text-blue-500" />} showViewAll={false}>
             <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
                     <label className="block text-sm font-medium text-gray-700">Tipo di richiesta</label>
@@ -133,7 +133,32 @@ const RequestForm: React.FC<{ onSubmit: (req: HolidayRequest) => void }> = ({ on
             </form>
         </WidgetCard>
     )
-}
+};
+
+const MyRequestsWidget: React.FC<{ requests: HolidayRequest[] }> = ({ requests }) => {
+    const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
+    return (
+        <WidgetCard title="My Requests" icon={<BriefcaseIcon className="h-6 w-6 text-purple-500" />} showViewAll={false}>
+            <div className="space-y-3 max-h-60 overflow-y-auto">
+                {requests.length > 0 ? requests.map(req => (
+                    <div key={req.id} className="p-3 bg-gray-50 rounded-lg border border-gray-200 flex items-center space-x-3">
+                        <div className={`flex-shrink-0 h-10 w-10 rounded-full flex items-center justify-center ${req.type === 'Holiday' ? 'bg-blue-100 text-blue-600' : 'bg-pink-100 text-pink-600'}`}>
+                            {req.type === 'Holiday' ? <BriefcaseIcon className="h-5 w-5"/> : <HeartIcon className="h-5 w-5"/>}
+                        </div>
+                        <div className="flex-1">
+                            <p className="font-semibold text-sm text-gray-800">{req.type}</p>
+                            <p className="text-xs text-gray-500">{formatDate(req.startDate)} - {formatDate(req.endDate)}</p>
+                        </div>
+                         <span className="text-xs font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded-full">{req.status}</span>
+                    </div>
+                )) : (
+                    <p className="text-center text-gray-500 text-sm py-4">You haven't made any requests yet.</p>
+                )}
+            </div>
+        </WidgetCard>
+    );
+};
 
 export const HolidaysPage: React.FC<{ initialRequests: HolidayRequest[] }> = ({ initialRequests }) => {
     const [requests, setRequests] = useState(initialRequests);
@@ -142,14 +167,19 @@ export const HolidaysPage: React.FC<{ initialRequests: HolidayRequest[] }> = ({ 
         setRequests(prev => [...prev, newRequest]);
     };
 
+    const myRequests = useMemo(() => {
+        return requests.filter(r => r.userName === 'Alex Chen').sort((a,b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
+    }, [requests]);
+
     return (
         <div className="container mx-auto">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Gestione Ferie e Permessi</h1>
             <p className="text-gray-500 mb-8">Invia una nuova richiesta o visualizza il calendario del team.</p>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-1">
+                <div className="lg:col-span-1 space-y-6">
                     <RequestForm onSubmit={handleAddRequest} />
+                    <MyRequestsWidget requests={myRequests} />
                 </div>
                 <div className="lg:col-span-2">
                     <HolidaysCalendar requests={requests} />

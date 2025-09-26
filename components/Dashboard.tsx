@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import type { DashboardData, Announcement, DocumentItem, Email, TeamMember, View } from '../types';
 import { DocumentType } from '../types';
@@ -7,10 +8,11 @@ import { DocsIcon, SheetsIcon, NewsIcon, MailIcon, TeamIcon, ChevronRightIcon } 
 
 // Mock team data as it's not part of the Gemini response
 const teamMembers: TeamMember[] = [
-    { id: '1', name: 'Elena Rodriguez', role: 'Lead Engineer', avatarUrl: 'https://picsum.photos/seed/1/100' },
-    { id: '2', name: 'Ben Carter', role: 'UX Designer', avatarUrl: 'https://picsum.photos/seed/2/100' },
-    { id: '3', name: 'Aisha Khan', role: 'Data Scientist', avatarUrl: 'https://picsum.photos/seed/3/100' },
-    { id: '4', name: 'Marcus Cole', role: 'Marketing Lead', avatarUrl: 'https://picsum.photos/seed/4/100' },
+    // FIX: Added missing properties (department, email, phone) to conform to the TeamMember type.
+    { id: '1', name: 'Elena Rodriguez', role: 'Lead Engineer', avatarUrl: 'https://picsum.photos/seed/1/100', department: 'Engineering', email: 'elena.r@example.com', phone: '(555) 123-4567' },
+    { id: '2', name: 'Ben Carter', role: 'UX Designer', avatarUrl: 'https://picsum.photos/seed/2/100', department: 'Design', email: 'ben.c@example.com', phone: '(555) 234-5678' },
+    { id: '3', name: 'Aisha Khan', role: 'Data Scientist', avatarUrl: 'https://picsum.photos/seed/3/100', department: 'Product', email: 'aisha.k@example.com', phone: '(555) 345-6789' },
+    { id: '4', name: 'Marcus Cole', role: 'Marketing Lead', avatarUrl: 'https://picsum.photos/seed/4/100', department: 'Marketing', email: 'marcus.c@example.com', phone: '(555) 456-7890' },
 ];
 
 const AnnouncementsWidget: React.FC<{ announcements: Announcement[] }> = ({ announcements }) => (
