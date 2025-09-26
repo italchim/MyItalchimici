@@ -170,9 +170,25 @@ const responseSchema = {
                 },
                 required: ["id", "title", "description", "dueDate", "status", "createdBy", "assignedTo"]
             }
+        },
+        calendarEvents: {
+            type: Type.ARRAY,
+            description: "A list of 5-7 calendar events scheduled for today for 'Alex Chen'. Include a mix of types.",
+            items: {
+                type: Type.OBJECT,
+                properties: {
+                    id: { type: Type.STRING, description: "Unique identifier for the calendar event." },
+                    title: { type: Type.STRING, description: "The title or name of the event." },
+                    startTime: { type: Type.STRING, description: "The start time of the event in HH:MM format (24-hour)." },
+                    endTime: { type: Type.STRING, description: "The end time of the event in HH:MM format (24-hour)." },
+                    type: { type: Type.STRING, enum: ['Meeting', 'Focus Time', 'Event'], description: "The type of the event." },
+                    location: { type: Type.STRING, description: "Optional location of the event, e.g., 'Online' or a room number." }
+                },
+                required: ["id", "title", "startTime", "endTime", "type"]
+            }
         }
     },
-    required: ["announcements", "documents", "emails", "holidayRequests", "suggestions", "forumThreads", "policyDocuments", "tasks"]
+    required: ["announcements", "documents", "emails", "holidayRequests", "suggestions", "forumThreads", "policyDocuments", "tasks", "calendarEvents"]
 };
 
 export const generateDashboardContent = async (): Promise<DashboardData> => {
@@ -184,7 +200,7 @@ export const generateDashboardContent = async (): Promise<DashboardData> => {
     try {
         const response = await aiClient.models.generateContent({
             model: "gemini-2.5-flash",
-            contents: "Generate realistic mock data for a corporate intranet dashboard for a user named Alex Chen. The company is a mid-sized tech firm. Include company announcements, recent documents (owned by or shared with Alex Chen), corporate emails, approved team holiday/sick leave requests, user-submitted suggestions, active forum discussion threads, a set of corporate policy documents with detailed summaries, and a list of tasks assigned to and created by Alex Chen.",
+            contents: "Generate realistic mock data for a corporate intranet dashboard for a user named Alex Chen. The company is a mid-sized tech firm. Include company announcements, recent documents (owned by or shared with Alex Chen), corporate emails, approved team holiday/sick leave requests, user-submitted suggestions, active forum discussion threads, a set of corporate policy documents with detailed summaries, a list of tasks assigned to and created by Alex Chen, and a list of 5-7 calendar events for today.",
             config: {
                 responseMimeType: "application/json",
                 responseSchema: responseSchema,
@@ -195,7 +211,7 @@ export const generateDashboardContent = async (): Promise<DashboardData> => {
         const parsedData = JSON.parse(jsonText);
 
         // Basic validation
-        if (!parsedData.announcements || !parsedData.documents || !parsedData.emails || !parsedData.holidayRequests || !parsedData.suggestions || !parsedData.forumThreads || !parsedData.policyDocuments || !parsedData.tasks) {
+        if (!parsedData.announcements || !parsedData.documents || !parsedData.emails || !parsedData.holidayRequests || !parsedData.suggestions || !parsedData.forumThreads || !parsedData.policyDocuments || !parsedData.tasks || !parsedData.calendarEvents) {
             throw new Error("Invalid data structure received from API.");
         }
         

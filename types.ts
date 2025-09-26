@@ -100,6 +100,15 @@ export interface Task {
     assignedTo: string;
 }
 
+export interface CalendarEvent {
+    id: string;
+    title: string;
+    startTime: string; // e.g., "09:00"
+    endTime: string; // e.g., "10:00"
+    type: 'Meeting' | 'Focus Time' | 'Event';
+    location?: string; // e.g., "Online" or "Conference Room 4B"
+}
+
 export interface DashboardData {
     announcements: Announcement[];
     documents: DocumentItem[];
@@ -109,6 +118,7 @@ export interface DashboardData {
     forumThreads: ForumThread[];
     policyDocuments: PolicyDocument[];
     tasks: Task[];
+    calendarEvents: CalendarEvent[];
 }
 
 export interface SearchResult {

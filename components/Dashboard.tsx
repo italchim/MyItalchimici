@@ -1,19 +1,8 @@
-
-
 import React from 'react';
-import type { DashboardData, Announcement, DocumentItem, Email, TeamMember, View } from '../types';
+import type { DashboardData, Announcement, DocumentItem, Email, CalendarEvent, View } from '../types';
 import { DocumentType } from '../types';
 import { WidgetCard } from './WidgetCard';
-import { DocsIcon, SheetsIcon, NewsIcon, MailIcon, TeamIcon, ChevronRightIcon } from './Icons';
-
-// Mock team data as it's not part of the Gemini response
-const teamMembers: TeamMember[] = [
-    // FIX: Added missing properties (department, email, phone) to conform to the TeamMember type.
-    { id: '1', name: 'Elena Rodriguez', role: 'Lead Engineer', avatarUrl: 'https://picsum.photos/seed/1/100', department: 'Engineering', email: 'elena.r@example.com', phone: '(555) 123-4567' },
-    { id: '2', name: 'Ben Carter', role: 'UX Designer', avatarUrl: 'https://picsum.photos/seed/2/100', department: 'Design', email: 'ben.c@example.com', phone: '(555) 234-5678' },
-    { id: '3', name: 'Aisha Khan', role: 'Data Scientist', avatarUrl: 'https://picsum.photos/seed/3/100', department: 'Product', email: 'aisha.k@example.com', phone: '(555) 345-6789' },
-    { id: '4', name: 'Marcus Cole', role: 'Marketing Lead', avatarUrl: 'https://picsum.photos/seed/4/100', department: 'Marketing', email: 'marcus.c@example.com', phone: '(555) 456-7890' },
-];
+import { DocsIcon, SheetsIcon, NewsIcon, MailIcon, CalendarIcon, ChevronRightIcon } from './Icons';
 
 const AnnouncementsWidget: React.FC<{ announcements: Announcement[] }> = ({ announcements }) => (
   <WidgetCard title="Company Announcements" icon={<NewsIcon className="h-6 w-6 text-indigo-500" />}>
@@ -70,25 +59,57 @@ const EmailsWidget: React.FC<{ emails: Email[] }> = ({ emails }) => (
   </WidgetCard>
 );
 
-const TeamWidget: React.FC<{ members: TeamMember[] }> = ({ members }) => (
-    <WidgetCard title="Team Directory" icon={<TeamIcon className="h-6 w-6 text-yellow-500" />}>
-        <div className="space-y-3">
-            {members.map(member => (
-                <div key={member.id} className="flex items-center space-x-3 cursor-pointer p-1 -m-1 hover:bg-gray-50 rounded-lg">
-                    <img src={member.avatarUrl} alt={member.name} className="h-10 w-10 rounded-full" />
-                    <div>
-                        <p className="text-sm font-medium text-gray-900">{member.name}</p>
-                        <p className="text-xs text-gray-500">{member.role}</p>
-                    </div>
+const AgendaWidget: React.FC<{ events: CalendarEvent[] }> = ({ events }) => {
+    const formatTime = (time: string) => {
+        const [hour, minute] = time.split(':').map(Number);
+        const ampm = hour >= 12 ? 'PM' : 'AM';
+        const formattedHour = hour % 12 || 12;
+        return `${formattedHour}:${minute.toString().padStart(2, '0')} ${ampm}`;
+    };
+
+    const sortedEvents = events.sort((a, b) => a.startTime.localeCompare(b.startTime));
+
+    const eventTypeStyles: { [key in CalendarEvent['type']]: string } = {
+        'Meeting': 'border-blue-500',
+        'Focus Time': 'border-green-500',
+        'Event': 'border-purple-500',
+    };
+
+    return (
+      <WidgetCard 
+        title="Today's Agenda" 
+        icon={<CalendarIcon className="h-6 w-6 text-gray-700" />}
+        onViewAll={() => window.open('https://calendar.google.com', '_blank')}
+      >
+        {sortedEvents.length > 0 ? (
+            <div className="space-y-4">
+              {sortedEvents.map((event) => (
+                <div key={event.id} className={`pl-4 border-l-4 ${eventTypeStyles[event.type]}`}>
+                  <p className="text-sm font-semibold text-gray-800">{event.title}</p>
+                  <p className="text-xs text-gray-500">
+                    {formatTime(event.startTime)} - {formatTime(event.endTime)}
+                  </p>
+                  {event.location && (
+                    <p className="text-xs text-gray-500">
+                      Location: {event.location}
+                    </p>
+                  )}
                 </div>
-            ))}
-        </div>
-    </WidgetCard>
-);
+              ))}
+            </div>
+        ) : (
+            <div className="text-center py-8">
+                <CalendarIcon className="h-10 w-10 mx-auto text-gray-300" />
+                <p className="mt-2 text-sm text-gray-500">No events scheduled for today.</p>
+            </div>
+        )}
+      </WidgetCard>
+    );
+};
 
 
 export const Dashboard: React.FC<{ data: DashboardData; setActiveView: (view: View) => void }> = ({ data, setActiveView }) => {
-  const { announcements, documents, emails } = data;
+  const { announcements, documents, emails, calendarEvents } = data;
   return (
     <div className="container mx-auto">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back, Alex</h1>
@@ -101,7 +122,7 @@ export const Dashboard: React.FC<{ data: DashboardData; setActiveView: (view: Vi
             </div>
             <div className="lg:col-span-1 space-y-6">
                 <EmailsWidget emails={emails} />
-                <TeamWidget members={teamMembers} />
+                <AgendaWidget events={calendarEvents} />
             </div>
         </div>
     </div>
