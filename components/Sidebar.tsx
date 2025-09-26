@@ -42,7 +42,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) =
         <NavItem icon={<ForumIcon className="h-5 w-5" />} label="Forum" active={activeView === 'forum'} onClick={() => setActiveView('forum')} />
         <NavItem icon={<PolicyIcon className="h-5 w-5" />} label="Politiche e Procedure" active={activeView === 'policies'} onClick={() => setActiveView('policies')} />
         <NavItem icon={<TeamIcon className="h-5 w-5" />} label="Team Directory" active={activeView === 'team'} onClick={() => setActiveView('team')} />
-        <NavItem icon={<GmailIcon className="h-5 w-5" />} label="Email" onClick={() => {}} />
+        <NavItem icon={<GmailIcon className="h-5 w-5" />} label="Email" active={activeView === 'email'} onClick={() => setActiveView('email')} />
       </nav>
       <div className="p-4 border-t border-gray-200">
         <NavItem icon={<SettingsIcon className="h-5 w-5" />} label="Settings" onClick={() => {}} />

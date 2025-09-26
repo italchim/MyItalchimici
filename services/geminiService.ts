@@ -7,12 +7,12 @@ import { DocumentType } from '../types';
 // without a build step. For this deployment to work, you must paste your API key here.
 // For a production app, the recommended secure approach is using a "serverless function"
 // to act as a proxy, which we can implement in a future step.
-const API_KEY = "PASTE_YOUR_GEMINI_API_KEY_HERE";
+const API_KEY = "AIzaSyD1XhOonX0LFqlMI8-4Yh9C8HTwLA1rsfQ";
 
 let ai: GoogleGenAI | null = null;
 const getAiClient = () => {
     if (!ai) {
-        if (API_KEY === "AIzaSyD1XhOonX0LFqlMI8-4Yh9C8HTwLA1rsfQ" || !API_KEY) {
+        if (API_KEY === "PASTE_YOUR_GEMINI_API_KEY_HERE" || !API_KEY) {
             // Return null if the key is not configured. The calling function will handle this.
             return null;
         }

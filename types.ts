@@ -3,7 +3,7 @@ export enum DocumentType {
     SHEETS = 'Google Sheets',
 }
 
-export type View = 'dashboard' | 'holidays' | 'documents' | 'spreadsheets' | 'suggestions' | 'forum' | 'policies' | 'search' | 'team';
+export type View = 'dashboard' | 'holidays' | 'documents' | 'spreadsheets' | 'suggestions' | 'forum' | 'policies' | 'search' | 'team' | 'email';
 
 export interface Announcement {
     id: string;
@@ -13,7 +13,7 @@ export interface Announcement {
 }
 
 export interface DocumentItem {
-    id: string;
+    id:string;
     title: string;
     type: DocumentType;
     lastEdited: string;

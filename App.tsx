@@ -11,6 +11,7 @@ import { PoliciesPage } from './components/PoliciesPage';
 import { LoadingSpinner } from './components/LoadingSpinner';
 import { SearchResultsPage } from './components/SearchResultsPage';
 import { TeamDirectoryPage } from './components/TeamDirectoryPage';
+import { EmailPage } from './components/EmailPage';
 import type { DashboardData, View, SearchResult, TeamMember } from './types';
 import { DocumentType } from './types';
 import { generateDashboardContent, performSearch, generateTeamDirectory } from './services/geminiService';
@@ -139,6 +140,8 @@ const App: React.FC = () => {
             return <PoliciesPage />;
         case 'team':
             return <TeamDirectoryPage teamMembers={teamMembers || []} />;
+        case 'email':
+            return <EmailPage emails={data.emails} />;
         case 'search':
             return <SearchResultsPage query={searchQuery} results={searchResults} setActiveView={setActiveView} />;
         default:
