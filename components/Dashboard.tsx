@@ -108,11 +108,11 @@ const AgendaWidget: React.FC<{ events: CalendarEvent[] }> = ({ events }) => {
 };
 
 
-export const Dashboard: React.FC<{ data: DashboardData; setActiveView: (view: View) => void }> = ({ data, setActiveView }) => {
+export const Dashboard: React.FC<{ data: DashboardData; setActiveView: (view: View) => void; userName: string; }> = ({ data, setActiveView, userName }) => {
   const { announcements, documents, emails, calendarEvents } = data;
   return (
     <div className="container mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back, Alex</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back, {userName.split(' ')[0]}</h1>
         <p className="text-gray-500 mb-8">Here's a snapshot of what's happening today.</p>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

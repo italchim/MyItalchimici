@@ -14,9 +14,16 @@ import { TeamDirectoryPage } from './components/TeamDirectoryPage';
 import { EmailPage } from './components/EmailPage';
 import { TasksPage } from './components/TasksPage';
 import { LoginPage } from './components/LoginPage';
-import type { DashboardData, View, SearchResult, TeamMember, PolicyDocument, Task } from './types';
+import { SettingsPage } from './components/SettingsPage';
+import type { DashboardData, View, SearchResult, TeamMember, PolicyDocument, Task, UserSettings } from './types';
 import { DocumentType } from './types';
 import { generateDashboardContent, performSearch, generateTeamDirectory } from './services/geminiService';
+
+const watermarkStyle = {
+    backgroundImage: `url("data:image/svg+xml,%3Csvg width='272' height='272' xmlns='http://www.w3.org/2000/svg'%3E%3Cimage href='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARAAAAEQCAYAAABPfx33AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAIQSURBVGhD7ZpBDsIgDEVx/0s72F6eRxwYgtFGnE6r0D62Y4yEl3++fF4A/L2y+T0wCLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRL-=-' width='272' height='272' opacity='0.03' /%3E%3C/svg%3E")`,
+    backgroundRepeat: 'repeat',
+    backgroundPosition: 'center',
+};
 
 const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
@@ -31,6 +38,22 @@ const App: React.FC = () => {
 
   const [teamMembers, setTeamMembers] = useState<TeamMember[] | null>(null);
   const [loadingTeam, setLoadingTeam] = useState<boolean>(false);
+
+  const [userSettings, setUserSettings] = useState<UserSettings>({
+      name: 'Alex Chen',
+      avatarUrl: 'https://picsum.photos/100/100',
+  });
+
+  useEffect(() => {
+    try {
+        const savedSettings = localStorage.getItem('userSettings');
+        if (savedSettings) {
+            setUserSettings(JSON.parse(savedSettings));
+        }
+    } catch (e) {
+        console.error("Failed to parse user settings from localStorage", e);
+    }
+  }, []);
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -117,6 +140,15 @@ const App: React.FC = () => {
           return { ...currentData, tasks: newTasks };
       });
   };
+
+  const handleSettingsUpdate = (newSettings: UserSettings) => {
+    setUserSettings(newSettings);
+    try {
+        localStorage.setItem('userSettings', JSON.stringify(newSettings));
+    } catch (e) {
+        console.error("Failed to save user settings to localStorage", e);
+    }
+  };
   
   const handleLoginSuccess = () => {
       setIsAuthenticated(true);
@@ -157,7 +189,7 @@ const App: React.FC = () => {
     if (data) {
       switch (activeView) {
         case 'dashboard':
-          return <Dashboard data={data} setActiveView={setActiveView} />;
+          return <Dashboard data={data} setActiveView={setActiveView} userName={userSettings.name} />;
         case 'holidays':
           return <HolidaysPage initialRequests={data.holidayRequests} />;
         case 'documents':
@@ -178,8 +210,10 @@ const App: React.FC = () => {
             return <TasksPage initialTasks={data.tasks || []} onTasksUpdate={handleUpdateTasks} />;
         case 'search':
             return <SearchResultsPage query={searchQuery} results={searchResults} setActiveView={setActiveView} />;
+        case 'settings':
+            return <SettingsPage currentSettings={userSettings} onSettingsUpdate={handleSettingsUpdate} />;
         default:
-          return <Dashboard data={data} setActiveView={setActiveView} />;
+          return <Dashboard data={data} setActiveView={setActiveView} userName={userSettings.name} />;
       }
     }
     return null;
@@ -192,9 +226,12 @@ const App: React.FC = () => {
   return (
     <div className="flex h-screen bg-gray-50 text-gray-800">
       <Sidebar activeView={activeView} setActiveView={setActiveView} />
-      <div className="flex flex-col flex-1 overflow-hidden">
-        <Header onSearch={handleSearch} onLogout={handleLogout} activeView={activeView} />
-        <main className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-4 md:p-8">
+      <div className="flex flex-col flex-1 overflow-hidden bg-black">
+        <Header onSearch={handleSearch} onLogout={handleLogout} activeView={activeView} userName={userSettings.name} userAvatarUrl={userSettings.avatarUrl} />
+        <main 
+          className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-4 md:p-8 rounded-tl-2xl"
+          style={watermarkStyle}
+        >
           {renderContent()}
         </main>
       </div>

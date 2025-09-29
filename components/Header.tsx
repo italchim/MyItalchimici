@@ -7,6 +7,8 @@ interface HeaderProps {
     onSearch: (query: string) => void;
     onLogout: () => void;
     activeView: View;
+    userName: string;
+    userAvatarUrl: string;
 }
 
 const ActionLink: React.FC<{ href: string; icon: React.ReactNode; text: string; }> = ({ href, icon, text }) => (
@@ -16,14 +18,15 @@ const ActionLink: React.FC<{ href: string; icon: React.ReactNode; text: string; 
         rel="noopener noreferrer"
         className="flex items-center space-x-2 px-3 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 hover:text-gray-900 transition-colors text-sm font-medium"
         aria-label={text}
+        title={text}
     >
         {icon}
-        <span>{text}</span>
+        <span className="hidden lg:inline">{text}</span>
     </a>
 );
 
 
-export const Header: React.FC<HeaderProps> = ({ onSearch, onLogout, activeView }) => {
+export const Header: React.FC<HeaderProps> = ({ onSearch, onLogout, activeView, userName, userAvatarUrl }) => {
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const userDropdownRef = useRef<HTMLDivElement>(null);
   const [isLinksDropdownOpen, setIsLinksDropdownOpen] = useState(false);
@@ -57,7 +60,7 @@ export const Header: React.FC<HeaderProps> = ({ onSearch, onLogout, activeView }
     switch (activeView) {
       case 'dashboard':
         return (
-          <div className="hidden lg:flex items-center space-x-3">
+          <div className="hidden md:flex items-center space-x-3">
             <ActionLink
               href="https://mail.google.com"
               icon={<GmailIcon className="h-5 w-5 text-red-500" />}
@@ -72,9 +75,10 @@ export const Header: React.FC<HeaderProps> = ({ onSearch, onLogout, activeView }
                 <button
                     onClick={() => setIsLinksDropdownOpen(!isLinksDropdownOpen)}
                     className="flex items-center space-x-2 px-3 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 hover:text-gray-900 transition-colors text-sm font-medium"
+                    title="Links"
                 >
                     <LinkIcon className="h-5 w-5" />
-                    <span>Links</span>
+                    <span className="hidden lg:inline">Links</span>
                     <ChevronDownIcon className="h-4 w-4" />
                 </button>
                 {isLinksDropdownOpen && (
@@ -127,8 +131,8 @@ export const Header: React.FC<HeaderProps> = ({ onSearch, onLogout, activeView }
   return (
     <header className="flex items-center justify-between h-16 bg-black border-b border-gray-800 px-4 md:px-8 shrink-0 space-x-4">
       {/* Left & Center Section */}
-      <div className="flex items-center flex-1 min-w-0">
-        <div className="relative w-full max-w-lg">
+      <div className="flex items-center flex-1 min-w-0 gap-6">
+        <div className="relative flex-shrink w-full max-w-lg">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <SearchIcon className="h-5 w-5 text-gray-500" />
           </div>
@@ -140,22 +144,22 @@ export const Header: React.FC<HeaderProps> = ({ onSearch, onLogout, activeView }
             aria-label="Search intranet"
           />
         </div>
-         <a
-            href="https://tasks.google.com/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="ml-4 p-2 rounded-full text-gray-300 hover:bg-gray-800 hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black focus:ring-blue-500"
-            aria-label="Open Google Tasks"
-        >
-            <TasksIcon className="h-6 w-6" />
-        </a>
-        <div className="ml-6 flex-shrink-0">
+        <div className="flex-shrink-0">
           {renderContextualActions()}
         </div>
       </div>
       
       {/* Right Section */}
       <div className="flex items-center space-x-4 shrink-0">
+        <a
+            href="https://tasks.google.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="p-2 rounded-full text-gray-300 hover:bg-gray-800 hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black focus:ring-blue-500"
+            aria-label="Open Google Tasks"
+        >
+            <TasksIcon className="h-6 w-6" />
+        </a>
         <button className="p-2 rounded-full text-gray-300 hover:bg-gray-800 hover:text-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black focus:ring-blue-500">
           <BellIcon className="h-6 w-6" />
         </button>
@@ -163,11 +167,12 @@ export const Header: React.FC<HeaderProps> = ({ onSearch, onLogout, activeView }
             <button onClick={() => setIsUserDropdownOpen(!isUserDropdownOpen)} className="flex items-center p-1 rounded-full hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-black focus:ring-blue-500">
               <img
                 className="h-9 w-9 rounded-full object-cover"
-                src="https://picsum.photos/100/100"
+                src={userAvatarUrl}
                 alt="User avatar"
+                onError={(e) => { e.currentTarget.src = 'https://picsum.photos/100/100'; }} // Fallback
               />
               <div className="ml-3 hidden md:block text-left">
-                <p className="text-sm font-medium text-gray-200">Alex Chen</p>
+                <p className="text-sm font-medium text-gray-200">{userName}</p>
                 <p className="text-xs text-gray-400">Product Manager</p>
               </div>
             </button>

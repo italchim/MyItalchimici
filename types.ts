@@ -3,7 +3,12 @@ export enum DocumentType {
     SHEETS = 'Google Sheets',
 }
 
-export type View = 'dashboard' | 'holidays' | 'documents' | 'spreadsheets' | 'suggestions' | 'forum' | 'policies' | 'search' | 'team' | 'email' | 'tasks';
+export type View = 'dashboard' | 'holidays' | 'documents' | 'spreadsheets' | 'suggestions' | 'forum' | 'policies' | 'search' | 'team' | 'email' | 'tasks' | 'settings';
+
+export interface UserSettings {
+    name: string;
+    avatarUrl: string;
+}
 
 export interface Announcement {
     id: string;

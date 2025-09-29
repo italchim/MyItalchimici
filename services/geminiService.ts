@@ -2,21 +2,12 @@ import { GoogleGenAI, Type } from "@google/genai";
 import type { DashboardData, SearchResult, TeamMember, PolicyDocument } from '../types';
 import { DocumentType } from '../types';
 
-// --- Vercel Deployment Note ---
-// Vercel's Environment Variables are not directly accessible in the browser for static sites
-// without a build step. For this deployment to work, you must paste your API key here.
-// For a production app, the recommended secure approach is using a "serverless function"
-// to act as a proxy, which we can implement in a future step.
-const API_KEY = "AIzaSyD1XhOonX0LFqlMI8-4Yh9C8HTwLA1rsfQ";
-
 let ai: GoogleGenAI | null = null;
 const getAiClient = () => {
     if (!ai) {
-        if (API_KEY === "PASTE_YOUR_GEMINI_API_KEY_HERE" || !API_KEY) {
-            // Return null if the key is not configured. The calling function will handle this.
-            return null;
-        }
-        ai = new GoogleGenAI({ apiKey: API_KEY });
+        // The API key is securely managed by the environment and passed as process.env.API_KEY.
+        // As per guidelines, we assume it's always available and valid.
+        ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
     }
     return ai;
 }
@@ -194,7 +185,7 @@ const responseSchema = {
 export const generateDashboardContent = async (): Promise<DashboardData> => {
     const aiClient = getAiClient();
     if (!aiClient) {
-        throw new Error("API key not configured. Please add your key to services/geminiService.ts");
+        throw new Error("Gemini AI client not initialized. Please check your API key configuration.");
     }
 
     try {
@@ -237,7 +228,7 @@ const searchResponseSchema = {
 export const performSearch = async (query: string, data: DashboardData): Promise<SearchResult> => {
     const aiClient = getAiClient();
     if (!aiClient) {
-        throw new Error("API key not configured.");
+        throw new Error("Gemini AI client not initialized.");
     }
 
     const context = JSON.stringify(data);
@@ -279,7 +270,7 @@ export const performSearch = async (query: string, data: DashboardData): Promise
 export const askPolicyQuestion = async (question: string, policies: PolicyDocument[]): Promise<string> => {
     const aiClient = getAiClient();
     if (!aiClient) {
-        throw new Error("API key not configured.");
+        throw new Error("Gemini AI client not initialized.");
     }
 
     // Prepare the context from the policy documents
@@ -332,7 +323,7 @@ const teamDirectorySchema = {
 export const generateTeamDirectory = async (): Promise<TeamMember[]> => {
     const aiClient = getAiClient();
     if (!aiClient) {
-        throw new Error("API key not configured.");
+        throw new Error("Gemini AI client not initialized.");
     }
 
     try {
