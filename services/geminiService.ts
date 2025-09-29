@@ -1,14 +1,16 @@
 
+
 import { GoogleGenAI, Type } from "@google/genai";
 import type { DashboardData, SearchResult, TeamMember, PolicyDocument } from '../types';
 import { DocumentType } from '../types';
 
-// Use Vite's standard way to access environment variables for client-side code.
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+// Fix: Switched to process.env.API_KEY and updated error message to align with coding guidelines.
+// This resolves the TypeScript error regarding `import.meta.env`.
+const apiKey = process.env.API_KEY;
 
 if (!apiKey) {
     // This provides a clear error for developers during setup.
-    throw new Error("Configuration Error: VITE_GEMINI_API_KEY environment variable not set. For local development, create a .env.local file in the project root and add VITE_GEMINI_API_KEY='your_api_key'. For production, configure this in your hosting provider's settings and redeploy.");
+    throw new Error("Configuration Error: API_KEY environment variable not set. For local development, create a .env.local file in the project root and add API_KEY='your_api_key'. For production, configure this in your hosting provider's settings and redeploy.");
 }
 
 // Initialize the client once at the module level for reuse.
@@ -209,7 +211,7 @@ export const generateDashboardContent = async (): Promise<DashboardData> => {
     } catch (error) {
         console.error("Error generating dashboard content:", error);
         if (error instanceof Error && (error.message.includes('API key not valid') || error.message.includes('API_KEY_INVALID'))) {
-             throw new Error("The configured API Key is not valid. Please check the VITE_GEMINI_API_KEY environment variable and try again.");
+             throw new Error("The configured API Key is not valid. Please check the API_KEY environment variable and try again.");
         }
         if (error instanceof Error) throw error;
         throw new Error("Failed to communicate with the Gemini API.");
