@@ -5,10 +5,12 @@ import { DocumentType } from '../types';
 let ai: GoogleGenAI | null = null;
 const getAiClient = () => {
     if (!ai) {
-        const apiKey = process.env.API_KEY;
+        // Vercel and other modern hosting providers require a special prefix 
+        // to safely expose environment variables to the browser.
+        const apiKey = process.env.REACT_APP_API_KEY;
         if (!apiKey) {
             // This user-friendly error message will be caught by the UI and displayed.
-            throw new Error("API_KEY environment variable not set. Please configure it in your hosting provider's settings (e.g., Vercel > Project > Settings > Environment Variables) and redeploy the application.");
+            throw new Error("REACT_APP_API_KEY environment variable not set. In your hosting provider (e.g., Vercel), go to Project > Settings > Environment Variables, ensure the key is named exactly REACT_APP_API_KEY, and then redeploy.");
         }
         ai = new GoogleGenAI({ apiKey: apiKey });
     }
