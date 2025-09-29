@@ -1,15 +1,14 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 import type { DashboardData, SearchResult, TeamMember, PolicyDocument } from '../types';
 import { DocumentType } from '../types';
 
-// Use Vite's standard way to access environment variables.
-// This is more secure and is standard practice for production applications.
-// FIX: Switched to process.env.API_KEY to align with Gemini API guidelines and fix the TypeScript error.
+// FIX: Switched to process.env.API_KEY to align with Gemini API guidelines.
 const apiKey = process.env.API_KEY;
 
 if (!apiKey) {
     // This provides a clear error for developers during setup.
-    throw new Error("Configuration Error: VITE_GEMINI_API_KEY environment variable not set. For local development, create a .env.local file in the project root and add VITE_GEMINI_API_KEY='your_api_key'. For production, configure this in your hosting provider's settings and redeploy.");
+    throw new Error("Configuration Error: API_KEY environment variable not set. For local development, create a .env.local file in the project root and add API_KEY='your_api_key'. For production, configure this in your hosting provider's settings and redeploy.");
 }
 
 // Initialize the client once at the module level for reuse.
