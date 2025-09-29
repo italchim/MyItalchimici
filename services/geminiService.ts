@@ -2,25 +2,18 @@ import { GoogleGenAI, Type } from "@google/genai";
 import type { DashboardData, SearchResult, TeamMember, PolicyDocument } from '../types';
 import { DocumentType } from '../types';
 
-let ai: GoogleGenAI | null = null;
+// Use Vite's standard way to access environment variables.
+// This is more secure and is standard practice for production applications.
+// FIX: Switched to process.env.API_KEY to align with Gemini API guidelines.
+const apiKey = process.env.API_KEY;
 
-const getAiClient = () => {
-    // The key is now stored in sessionStorage for the duration of the user's session.
-    // This avoids exposing the key in the code and works with hosting platforms
-    // like Vercel that don't expose env vars to the browser without a build step.
-    const apiKey = sessionStorage.getItem('gemini_api_key');
-    
-    if (!apiKey) {
-        throw new Error("API Key not found. Please log in again and provide your API key to continue.");
-    }
-    
-    // Initialize the client only if it hasn't been, or if the key has changed (though it shouldn't in a session).
-    // This is a simple way to handle re-initialization if needed without complex logic.
-    if (!ai) {
-        ai = new GoogleGenAI({ apiKey: apiKey });
-    }
-    return ai;
+if (!apiKey) {
+    // This provides a clear error for developers during setup.
+    throw new Error("Configuration Error: VITE_GEMINI_API_KEY environment variable not set. For local development, create a .env.local file in the project root and add VITE_GEMINI_API_KEY='your_api_key'. For production, configure this in your hosting provider's settings and redeploy.");
 }
+
+// Initialize the client once at the module level for reuse.
+const ai = new GoogleGenAI({ apiKey });
 
 
 const responseSchema = {
@@ -194,10 +187,8 @@ const responseSchema = {
 };
 
 export const generateDashboardContent = async (): Promise<DashboardData> => {
-    const aiClient = getAiClient();
-
     try {
-        const response = await aiClient.models.generateContent({
+        const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
             contents: "Generate realistic mock data for a corporate intranet dashboard for a user named Alex Chen. The company is a mid-sized tech firm. Include company announcements, recent documents (owned by or shared with Alex Chen), corporate emails, approved team holiday/sick leave requests, user-submitted suggestions, active forum discussion threads, a set of corporate policy documents with detailed summaries, a list of tasks assigned to and created by Alex Chen, and a list of 5-7 calendar events for today.",
             config: {
@@ -218,8 +209,8 @@ export const generateDashboardContent = async (): Promise<DashboardData> => {
 
     } catch (error) {
         console.error("Error generating dashboard content:", error);
-        if (error instanceof Error && error.message.includes('API key not valid')) {
-             throw new Error("The provided API Key is not valid. Please check the key and try again.");
+        if (error instanceof Error && (error.message.includes('API key not valid') || error.message.includes('API_KEY_INVALID'))) {
+             throw new Error("The configured API Key is not valid. Please check the VITE_GEMINI_API_KEY environment variable and try again.");
         }
         if (error instanceof Error) throw error;
         throw new Error("Failed to communicate with the Gemini API.");
@@ -238,8 +229,6 @@ const searchResponseSchema = {
 };
 
 export const performSearch = async (query: string, data: DashboardData): Promise<SearchResult> => {
-    const aiClient = getAiClient();
-
     const context = JSON.stringify(data);
     const prompt = `You are an intelligent search engine for a corporate intranet. Search through the following JSON data for items that are relevant to the user's query.
     
@@ -251,7 +240,7 @@ export const performSearch = async (query: string, data: DashboardData): Promise
     Return a JSON object containing arrays of the matching items, structured exactly like the original data. The object should only contain items that are highly relevant to the query. If no relevant items are found for a category, return an empty array for that category.`;
 
     try {
-        const response = await aiClient.models.generateContent({
+        const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
             contents: prompt,
             config: {
@@ -278,8 +267,6 @@ export const performSearch = async (query: string, data: DashboardData): Promise
 };
 
 export const askPolicyQuestion = async (question: string, policies: PolicyDocument[]): Promise<string> => {
-    const aiClient = getAiClient();
-
     // Prepare the context from the policy documents
     const context = policies.map(p => `Document Title: ${p.title}\nContent:\n${p.summary}`).join('\n\n---\n\n');
     
@@ -293,7 +280,7 @@ export const askPolicyQuestion = async (question: string, policies: PolicyDocume
     `;
 
     try {
-        const response = await aiClient.models.generateContent({
+        const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
             contents: prompt,
             config: {
@@ -329,10 +316,8 @@ const teamDirectorySchema = {
 };
 
 export const generateTeamDirectory = async (): Promise<TeamMember[]> => {
-    const aiClient = getAiClient();
-
     try {
-        const response = await aiClient.models.generateContent({
+        const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
             contents: "Generate a list of 28 realistic employees for a mid-sized tech company's team directory. Ensure a good mix of roles and departments.",
             config: {
