@@ -1,16 +1,16 @@
+
+
 import { GoogleGenAI, Type } from "@google/genai";
 import type { DashboardData, SearchResult, TeamMember, PolicyDocument } from '../types';
 import { DocumentType } from '../types';
 
-// Use Vite's standard way to access environment variables.
-// This is more secure and is standard practice for production applications.
-// FIX: Switched to process.env.API_KEY to align with Gemini API guidelines and fix TypeScript error.
+// Fix: Switched to process.env.API_KEY and updated error message to align with coding guidelines.
+// This resolves the TypeScript error regarding `import.meta.env`.
 const apiKey = process.env.API_KEY;
 
 if (!apiKey) {
     // This provides a clear error for developers during setup.
-    // FIX: Updated error message to reference API_KEY.
-    throw new Error("Configuration Error: API_KEY environment variable not set. Please ensure it is available in the execution environment.");
+    throw new Error("Configuration Error: API_KEY environment variable not set. For local development, create a .env.local file in the project root and add API_KEY='your_api_key'. For production, configure this in your hosting provider's settings and redeploy.");
 }
 
 // Initialize the client once at the module level for reuse.
@@ -211,7 +211,6 @@ export const generateDashboardContent = async (): Promise<DashboardData> => {
     } catch (error) {
         console.error("Error generating dashboard content:", error);
         if (error instanceof Error && (error.message.includes('API key not valid') || error.message.includes('API_KEY_INVALID'))) {
-             // FIX: Updated error message to reference API_KEY.
              throw new Error("The configured API Key is not valid. Please check the API_KEY environment variable and try again.");
         }
         if (error instanceof Error) throw error;

@@ -1,11 +1,10 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
 import type { DashboardData, SearchResult, TeamMember, PolicyDocument } from '../types';
 import { DocumentType } from '../types';
 
-// Use Vite's standard way to access environment variables.
-// This is more secure and is standard practice for production applications.
-// FIX: Switched to process.env.API_KEY to align with Gemini API guidelines.
-const apiKey = process.env.API_KEY;
+// Use Vite's standard way to access environment variables for client-side code.
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
 if (!apiKey) {
     // This provides a clear error for developers during setup.
