@@ -5,9 +5,12 @@ import { DocumentType } from '../types';
 let ai: GoogleGenAI | null = null;
 const getAiClient = () => {
     if (!ai) {
-        // The API key is securely managed by the environment and passed as process.env.API_KEY.
-        // As per guidelines, we assume it's always available and valid.
-        ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const apiKey = process.env.API_KEY;
+        if (!apiKey) {
+            // This user-friendly error message will be caught by the UI and displayed.
+            throw new Error("API_KEY environment variable not set. Please configure it in your hosting provider's settings (e.g., Vercel > Project > Settings > Environment Variables) and redeploy the application.");
+        }
+        ai = new GoogleGenAI({ apiKey: apiKey });
     }
     return ai;
 }
@@ -210,6 +213,7 @@ export const generateDashboardContent = async (): Promise<DashboardData> => {
 
     } catch (error) {
         console.error("Error generating dashboard content:", error);
+        if (error instanceof Error) throw error;
         throw new Error("Failed to communicate with the Gemini API.");
     }
 };
@@ -263,6 +267,7 @@ export const performSearch = async (query: string, data: DashboardData): Promise
         } as SearchResult;
     } catch (error) {
         console.error("Error performing search:", error);
+        if (error instanceof Error) throw error;
         throw new Error("Failed to communicate with the Gemini API for search.");
     }
 };
@@ -298,6 +303,7 @@ export const askPolicyQuestion = async (question: string, policies: PolicyDocume
 
     } catch (error) {
         console.error("Error asking policy question:", error);
+        if (error instanceof Error) throw error;
         throw new Error("Failed to get an answer from the AI assistant.");
     }
 };
@@ -341,6 +347,7 @@ export const generateTeamDirectory = async (): Promise<TeamMember[]> => {
 
     } catch (error) {
         console.error("Error generating team directory:", error);
+        if (error instanceof Error) throw error;
         throw new Error("Failed to fetch the team directory from the Gemini API.");
     }
 };
