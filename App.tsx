@@ -14,21 +14,23 @@ import { TeamDirectoryPage } from './components/TeamDirectoryPage';
 import { EmailPage } from './components/EmailPage';
 import { TasksPage } from './components/TasksPage';
 import { LoginPage } from './components/LoginPage';
+import { ApiKeyPage } from './components/ApiKeyPage';
 import { SettingsPage } from './components/SettingsPage';
 import type { DashboardData, View, SearchResult, TeamMember, PolicyDocument, Task, UserSettings } from './types';
 import { DocumentType } from './types';
 import { generateDashboardContent, performSearch, generateTeamDirectory } from './services/geminiService';
 
+type AppState = 'login' | 'needs_api_key' | 'loading' | 'ready' | 'error';
+
 const watermarkStyle = {
-    backgroundImage: `url("data:image/svg+xml,%3Csvg width='272' height='272' xmlns='http://www.w3.org/2000/svg'%3E%3Cimage href='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARAAAAEQCAYAAABPfx33AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAIQSURBVGhD7ZpBDsIgDEVx/0s72F6eRxwYgtFGnE6r0D62Y4yEl3++fF4A/L2y+T0wCLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRL-=-' width='272' height='272' opacity='0.03' /%3E%3C/svg%3E")`,
+    backgroundImage: `url("data:image/svg+xml,%3Csvg width='272' height='272' xmlns='http://www.w3.org/2000/svg'%3E%3Cimage href='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAARAAAAEQCAYAAABPfx33AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAIQSURBVGhD7ZpBDsIgDEVx/0s72F6eRxwYgtFGnE6r0D62Y4yEl3++fF4A/L2y+T0wCLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRLgIRL' /-=-" width-=-" width='272' height='272' opacity='0.03' /%3E%3C/svg%3E")`,
     backgroundRepeat: 'repeat',
     backgroundPosition: 'center',
 };
 
 const App: React.FC = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [appState, setAppState] = useState<AppState>('login');
   const [data, setData] = useState<DashboardData | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [activeView, setActiveView] = useState<View>('dashboard');
 
@@ -56,31 +58,7 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (!isAuthenticated) return;
-
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const dashboardData = await generateDashboardContent();
-        setData(dashboardData);
-      } catch (err) {
-        if (err instanceof Error) {
-            setError(err.message);
-        } else {
-            setError("An unknown error occurred.");
-        }
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [isAuthenticated]);
-
-  useEffect(() => {
-    if (!isAuthenticated) return;
+    if (appState !== 'ready') return;
 
     const fetchTeamData = async () => {
         if (activeView === 'team' && !teamMembers) {
@@ -102,7 +80,7 @@ const App: React.FC = () => {
         }
     };
     fetchTeamData();
-  }, [activeView, teamMembers, isAuthenticated]);
+  }, [activeView, teamMembers, appState]);
 
 
   const handleSearch = async (query: string) => {
@@ -151,17 +129,39 @@ const App: React.FC = () => {
   };
   
   const handleLoginSuccess = () => {
-      setIsAuthenticated(true);
+      setAppState('needs_api_key');
   };
 
+  const handleApiKeySubmit = async (apiKey: string) => {
+    sessionStorage.setItem('gemini_api_key', apiKey);
+    setAppState('loading');
+    setError(null);
+    try {
+        const dashboardData = await generateDashboardContent();
+        setData(dashboardData);
+        setAppState('ready');
+    } catch (err) {
+        sessionStorage.removeItem('gemini_api_key'); // Clear key on failure
+        if (err instanceof Error) {
+            setError(err.message);
+        } else {
+            setError("An unknown error occurred.");
+        }
+        setAppState('error');
+        console.error(err);
+    }
+  };
+
+
   const handleLogout = () => {
-      setIsAuthenticated(false);
+      sessionStorage.removeItem('gemini_api_key');
+      setAppState('login');
       setData(null);
       setTeamMembers(null);
       setActiveView('dashboard');
   }
 
-  const renderContent = () => {
+  const renderAppContent = () => {
     if (isSearching || loadingTeam) {
         return (
             <div className="flex justify-center items-center h-full">
@@ -175,17 +175,6 @@ const App: React.FC = () => {
         );
     }
 
-    if (loading) {
-      return <div className="flex justify-center items-center h-full"><LoadingSpinner /></div>;
-    }
-    if (error) {
-      return (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative text-center" role="alert">
-          <strong className="font-bold">Configuration Error: </strong>
-          <span className="block sm:inline">{error}</span>
-        </div>
-      );
-    }
     if (data) {
       switch (activeView) {
         case 'dashboard':
@@ -219,8 +208,34 @@ const App: React.FC = () => {
     return null;
   };
 
-  if (!isAuthenticated) {
+  if (appState === 'login') {
     return <LoginPage onLoginSuccess={handleLoginSuccess} />;
+  }
+  
+  if (appState === 'needs_api_key') {
+      return <ApiKeyPage onSubmit={handleApiKeySubmit} />;
+  }
+
+  if (appState === 'loading') {
+    return <div className="flex h-screen w-full justify-center items-center bg-gray-100"><LoadingSpinner /></div>;
+  }
+
+  if (appState === 'error') {
+     return (
+        <div className="flex h-screen w-full justify-center items-center bg-gray-100 p-4">
+            <div className="bg-white p-8 rounded-xl shadow-lg text-center max-w-md">
+                <h2 className="text-xl font-bold text-red-600 mb-2">An Error Occurred</h2>
+                <p className="text-red-700 mb-4">{error || "Failed to initialize the application."}</p>
+                <p className="text-sm text-gray-500 mb-6">This could be due to an invalid API key or a network issue. Please check your key and try again.</p>
+                <button 
+                    onClick={() => setAppState('needs_api_key')}
+                    className="bg-blue-600 text-white font-semibold py-2 px-6 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                    Try Again
+                </button>
+            </div>
+        </div>
+      );
   }
 
   return (
@@ -232,7 +247,7 @@ const App: React.FC = () => {
           className="flex-1 overflow-x-hidden overflow-y-auto bg-gray-100 p-4 md:p-8 rounded-tl-2xl"
           style={watermarkStyle}
         >
-          {renderContent()}
+          {renderAppContent()}
         </main>
       </div>
     </div>

@@ -3,19 +3,25 @@ import type { DashboardData, SearchResult, TeamMember, PolicyDocument } from '..
 import { DocumentType } from '../types';
 
 let ai: GoogleGenAI | null = null;
+
 const getAiClient = () => {
+    // The key is now stored in sessionStorage for the duration of the user's session.
+    // This avoids exposing the key in the code and works with hosting platforms
+    // like Vercel that don't expose env vars to the browser without a build step.
+    const apiKey = sessionStorage.getItem('gemini_api_key');
+    
+    if (!apiKey) {
+        throw new Error("API Key not found. Please log in again and provide your API key to continue.");
+    }
+    
+    // Initialize the client only if it hasn't been, or if the key has changed (though it shouldn't in a session).
+    // This is a simple way to handle re-initialization if needed without complex logic.
     if (!ai) {
-        // Vercel and other modern hosting providers require a special prefix 
-        // to safely expose environment variables to the browser.
-        const apiKey = process.env.REACT_APP_API_KEY;
-        if (!apiKey) {
-            // This user-friendly error message will be caught by the UI and displayed.
-            throw new Error("REACT_APP_API_KEY environment variable not set. In your hosting provider (e.g., Vercel), go to Project > Settings > Environment Variables, ensure the key is named exactly REACT_APP_API_KEY, and then redeploy.");
-        }
         ai = new GoogleGenAI({ apiKey: apiKey });
     }
     return ai;
 }
+
 
 const responseSchema = {
     type: Type.OBJECT,
@@ -189,9 +195,6 @@ const responseSchema = {
 
 export const generateDashboardContent = async (): Promise<DashboardData> => {
     const aiClient = getAiClient();
-    if (!aiClient) {
-        throw new Error("Gemini AI client not initialized. Please check your API key configuration.");
-    }
 
     try {
         const response = await aiClient.models.generateContent({
@@ -215,6 +218,9 @@ export const generateDashboardContent = async (): Promise<DashboardData> => {
 
     } catch (error) {
         console.error("Error generating dashboard content:", error);
+        if (error instanceof Error && error.message.includes('API key not valid')) {
+             throw new Error("The provided API Key is not valid. Please check the key and try again.");
+        }
         if (error instanceof Error) throw error;
         throw new Error("Failed to communicate with the Gemini API.");
     }
@@ -233,9 +239,6 @@ const searchResponseSchema = {
 
 export const performSearch = async (query: string, data: DashboardData): Promise<SearchResult> => {
     const aiClient = getAiClient();
-    if (!aiClient) {
-        throw new Error("Gemini AI client not initialized.");
-    }
 
     const context = JSON.stringify(data);
     const prompt = `You are an intelligent search engine for a corporate intranet. Search through the following JSON data for items that are relevant to the user's query.
@@ -276,9 +279,6 @@ export const performSearch = async (query: string, data: DashboardData): Promise
 
 export const askPolicyQuestion = async (question: string, policies: PolicyDocument[]): Promise<string> => {
     const aiClient = getAiClient();
-    if (!aiClient) {
-        throw new Error("Gemini AI client not initialized.");
-    }
 
     // Prepare the context from the policy documents
     const context = policies.map(p => `Document Title: ${p.title}\nContent:\n${p.summary}`).join('\n\n---\n\n');
@@ -330,9 +330,6 @@ const teamDirectorySchema = {
 
 export const generateTeamDirectory = async (): Promise<TeamMember[]> => {
     const aiClient = getAiClient();
-    if (!aiClient) {
-        throw new Error("Gemini AI client not initialized.");
-    }
 
     try {
         const response = await aiClient.models.generateContent({
