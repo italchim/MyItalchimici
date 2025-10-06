@@ -1,5 +1,5 @@
 {
-  "name": "MyItalchimici Intra",
-  "description": "A modern intranet portal designed to simulate seamless integration with Google Workspace, featuring dynamic content for announcements, documents, and emails powered by the Gemini API.",
+  "name": "Italchimici Intranet Portal",
+  "description": "A modern intranet portal for Italchimici, integrating Google Workspace functionalities and an AI-powered document assistant.",
   "requestFramePermissions": []
 }

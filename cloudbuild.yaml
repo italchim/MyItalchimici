@@ -1,0 +1,31 @@
+steps:
+  # Step 1: Access the Gemini API Key from Secret Manager
+  - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'get-api-key'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - 'gcloud secrets versions access latest --secret=gemini-api-key > /workspace/api_key.txt'
+
+  # Step 2: Replace the placeholder in the TypeScript file with the actual API key
+  # This uses sed to find and replace the placeholder %%GEMINI_API_KEY%%
+  - name: 'gcr.io/cloud-builders/gcloud'
+    id: 'inject-api-key'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        # Use a different delimiter for sed to avoid issues with special characters in the key
+        sed -i "s|%%GEMINI_API_KEY%%|$(cat /workspace/api_key.txt)|g" services/geminiService.ts
+
+  # Step 3: Deploy the application files to the Cloud Storage bucket
+  # The -d flag deletes files in the bucket that are not present in the source
+  # The -r flag makes the sync recursive
+  # Replace BUCKET_NAME with your actual bucket name (e.g., gs://portal-italchimici-prod)
+  - name: 'gcr.io/cloud-builders/gsutil'
+    id: 'deploy-to-bucket'
+    args: ['-m', 'rsync', '-d', '-r', '.', 'gs://italchimici_intranetportal]
+
+options:
+  # Set the logging mode for the build
+  logging: CLOUD_LOGGING_ONLY

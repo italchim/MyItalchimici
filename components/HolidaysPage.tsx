@@ -1,189 +1,246 @@
 import React, { useState, useMemo } from 'react';
-import type { HolidayRequest, LeaveType } from '../types';
-import { WidgetCard } from './WidgetCard';
-import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon, BriefcaseIcon, HeartIcon } from './Icons';
+import { MOCK_HOLIDAY_REQUESTS } from '../constants';
+import type { HolidayRequest } from '../types';
 
-const today = new Date();
-today.setHours(0, 0, 0, 0);
+const CalendarPreview: React.FC<{ startDate: string; endDate: string; allRequests: HolidayRequest[] }> = ({ startDate, endDate, allRequests }) => {
+    const [displayDate, setDisplayDate] = useState(new Date());
 
-const HolidaysCalendar: React.FC<{ requests: HolidayRequest[] }> = ({ requests }) => {
-    const [currentDate, setCurrentDate] = useState(new Date());
+    const start = startDate ? new Date(startDate) : null;
+    const end = endDate ? new Date(endDate) : null;
+    
+    // Normalize dates to ignore time for range checking
+    const startDay = start ? new Date(start.getFullYear(), start.getMonth(), start.getDate()) : null;
+    const endDay = end ? new Date(end.getFullYear(), end.getMonth(), end.getDate()) : null;
 
-    const { month, year, daysInMonth, firstDayOfMonth } = useMemo(() => {
-        const month = currentDate.getMonth();
-        const year = currentDate.getFullYear();
+    const dailyRequestCounts = useMemo(() => {
+        const counts = new Map<string, number>();
+        const activeRequests = allRequests.filter(req => req.status !== 'Respinta');
+
+        for (const req of activeRequests) {
+            let currentDate = new Date(req.startDate);
+            const endDate = new Date(req.endDate);
+
+            currentDate.setHours(0, 0, 0, 0);
+            endDate.setHours(0, 0, 0, 0);
+
+            while (currentDate <= endDate) {
+                const dateKey = currentDate.toISOString().split('T')[0]; // YYYY-MM-DD
+                counts.set(dateKey, (counts.get(dateKey) || 0) + 1);
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+        }
+        return counts;
+    }, [allRequests]);
+
+
+    const { monthName, year, daysInMonth, firstDayOfMonth } = useMemo(() => {
+        const year = displayDate.getFullYear();
+        const month = displayDate.getMonth();
+        const firstDayOfMonth = new Date(year, month, 1).getDay(); // 0=Sun, 1=Mon...
         const daysInMonth = new Date(year, month + 1, 0).getDate();
-        const firstDayOfMonth = new Date(year, month, 1).getDay();
-        return { month, year, daysInMonth, firstDayOfMonth };
-    }, [currentDate]);
+        const monthName = displayDate.toLocaleString('it-IT', { month: 'long' });
+        return { monthName, year, daysInMonth, firstDayOfMonth: (firstDayOfMonth === 0 ? 6 : firstDayOfMonth -1) }; // Adjust to Mon=0
+    }, [displayDate]);
 
-    const handlePrevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
-    const handleNextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
+    const handlePrevMonth = () => {
+        setDisplayDate(new Date(displayDate.getFullYear(), displayDate.getMonth() - 1, 1));
+    };
 
-    const getLeavesForDay = (day: number) => {
-        const date = new Date(year, month, day);
-        return requests
-            .filter(req => {
-                const startDate = new Date(req.startDate);
-                startDate.setUTCHours(0,0,0,0);
-                const endDate = new Date(req.endDate);
-                endDate.setUTCHours(0,0,0,0);
-                return date >= startDate && date <= endDate;
-            })
-            .map(req => req.userName);
+    const handleNextMonth = () => {
+        setDisplayDate(new Date(displayDate.getFullYear(), displayDate.getMonth() + 1, 1));
     };
 
     const calendarDays = [];
     for (let i = 0; i < firstDayOfMonth; i++) {
-        calendarDays.push(<div key={`empty-${i}`} className="border-r border-b border-gray-200"></div>);
+        calendarDays.push(<div key={`empty-${i}`} className="border-r border-b border-slate-200"></div>);
     }
+
     for (let day = 1; day <= daysInMonth; day++) {
-        const date = new Date(year, month, day);
-        const isToday = date.getTime() === today.getTime();
-        const leaves = getLeavesForDay(day);
-        const hasLeave = leaves.length > 0;
+        const currentDate = new Date(year, displayDate.getMonth(), day);
+        const today = new Date();
+        const isToday = today.getDate() === day && today.getMonth() === displayDate.getMonth() && today.getFullYear() === year;
+
+        const dateKey = currentDate.toISOString().split('T')[0];
+        const requestCount = dailyRequestCounts.get(dateKey);
+
+        let dayClass = 'text-center p-2 border-r border-b border-slate-200 text-slate-700 relative';
+        if (isToday) {
+            dayClass += ' font-bold text-slate-600';
+        }
+        
+        if (startDay && endDay && currentDate >= startDay && currentDate <= endDay) {
+            dayClass += ' bg-slate-100 text-slate-800';
+            if (currentDate.getTime() === startDay.getTime()) {
+                dayClass += ' rounded-l-lg';
+            }
+            if (currentDate.getTime() === endDay.getTime()) {
+                dayClass += ' rounded-r-lg';
+            }
+        }
 
         calendarDays.push(
-            <div 
-                key={day}
-                title={hasLeave ? `On leave: ${leaves.join(', ')}` : ''}
-                className={`p-2 border-r border-b border-gray-200 text-sm relative ${hasLeave ? 'bg-amber-100' : ''}`}
-            >
-                <span className={`flex items-center justify-center h-6 w-6 rounded-full ${isToday ? 'bg-blue-600 text-white' : ''}`}>
-                    {day}
-                </span>
-                {hasLeave && (
-                    <div className="absolute bottom-1 left-1/2 -translate-x-1/2 flex space-x-0.5">
-                        {leaves.slice(0, 3).map((_, index) => (
-                            <div key={index} className="h-1 w-1 bg-red-500 rounded-full"></div>
-                        ))}
-                    </div>
-                )}
+            <div key={day} className={dayClass}>
+              <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full ${isToday ? 'bg-slate-200' : ''}`}>
+                {day}
+              </span>
+              {requestCount && requestCount > 0 && (
+                  <div className="absolute bottom-1 right-1 w-5 h-5 bg-slate-700 text-white text-xs rounded-full flex items-center justify-center font-bold">
+                    {requestCount}
+                  </div>
+              )}
             </div>
         );
     }
-    
+
     return (
-        <WidgetCard title="Team Calendar" icon={<CalendarIcon className="h-6 w-6 text-green-500" />}>
-            <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-lg">{currentDate.toLocaleString('default', { month: 'long', year: 'numeric' })}</h3>
-                <div className="flex space-x-2">
-                    <button onClick={handlePrevMonth} className="p-1.5 rounded-md hover:bg-gray-100"><ChevronLeftIcon className="h-5 w-5 text-gray-600" /></button>
-                    <button onClick={handleNextMonth} className="p-1.5 rounded-md hover:bg-gray-100"><ChevronRightIcon className="h-5 w-5 text-gray-600" /></button>
-                </div>
+        <div className="bg-white rounded-lg shadow-md p-6 mt-8">
+            <h2 className="text-xl font-semibold text-slate-800 mb-4">Anteprima Calendario</h2>
+            <div className="flex justify-between items-center mb-4">
+                <button onClick={handlePrevMonth} className="p-2 rounded-full hover:bg-slate-100">&larr;</button>
+                <h3 className="font-semibold text-lg capitalize">{monthName} {year}</h3>
+                <button onClick={handleNextMonth} className="p-2 rounded-full hover:bg-slate-100">&rarr;</button>
             </div>
-            <div className="grid grid-cols-7 text-center font-medium text-xs text-gray-500 border-t border-l border-gray-200">
-                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => <div key={day} className="py-2 border-r border-b border-gray-200">{day}</div>)}
+            <div className="grid grid-cols-7 border-t border-l border-slate-200">
+                {['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'].map(day => (
+                    <div key={day} className="p-2 text-center text-xs font-semibold text-slate-500 border-r border-b border-slate-200 bg-slate-50">{day}</div>
+                ))}
                 {calendarDays}
             </div>
-        </WidgetCard>
+        </div>
     );
 };
 
-const RequestForm: React.FC<{ onSubmit: (req: HolidayRequest) => void }> = ({ onSubmit }) => {
+const StatusBadge: React.FC<{ status: HolidayRequest['status'] }> = ({ status }) => {
+    const baseClasses = 'px-2 py-1 text-xs font-semibold rounded-full inline-block';
+    const statusClasses = {
+        'Approvata': 'bg-green-100 text-green-800',
+        'In attesa': 'bg-yellow-100 text-yellow-800',
+        'Respinta': 'bg-red-100 text-red-800',
+    };
+    return <span className={`${baseClasses} ${statusClasses[status]}`}>{status}</span>;
+};
+
+
+const PastRequestsTable: React.FC = () => {
+    const requests = MOCK_HOLIDAY_REQUESTS;
+    const sortedRequests = [...requests].sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
+
+    return (
+        <div className="bg-white rounded-lg shadow-md p-6 mt-8">
+            <h2 className="text-xl font-semibold text-slate-800 mb-4">Storico Richieste</h2>
+            <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-slate-200">
+                    <thead className="bg-slate-50">
+                        <tr>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Tipo</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Dal</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Al</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Stato</th>
+                        </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-slate-200">
+                        {sortedRequests.map(req => (
+                            <tr key={req.id}>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-700 capitalize">{req.type}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{new Date(req.startDate).toLocaleString('it-IT', { dateStyle: 'short', timeStyle: 'short' })}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{new Date(req.endDate).toLocaleString('it-IT', { dateStyle: 'short', timeStyle: 'short' })}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                    <StatusBadge status={req.status} />
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+};
+
+export const HolidaysPage: React.FC = () => {
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
-    const [type, setType] = useState<LeaveType>('Holiday');
-    const [notes, setNotes] = useState('');
+    const [requestType, setRequestType] = useState('ferie');
+    const [isSubmitted, setIsSubmitted] = useState(false);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        if(!startDate || !endDate) {
-            alert("Please select both start and end dates.");
-            return;
+        if (startDate && endDate) {
+            console.log({
+                type: requestType,
+                from: startDate,
+                to: endDate,
+            });
+            setIsSubmitted(true);
+        } else {
+            alert("Per favore, compila sia la data di inizio che quella di fine.");
         }
-        onSubmit({
-            id: `req-${Date.now()}`,
-            userName: 'Alex Chen', // Hardcoded for current user
-            startDate,
-            endDate,
-            type,
-            status: 'Approved' // Simulating auto-approval
-        });
-        setStartDate('');
-        setEndDate('');
-        setNotes('');
+    };
+    
+    if (isSubmitted) {
+        return (
+            <div className="p-8 text-center">
+                 <h1 className="text-3xl font-bold text-slate-900 mb-4">Richiesta Inviata!</h1>
+                 <p className="text-slate-600 mb-8">La tua richiesta di {requestType === 'ferie' ? 'ferie' : 'permesso'} dal {new Date(startDate).toLocaleString('it-IT')} al {new Date(endDate).toLocaleString('it-IT')} è stata inviata per l'approvazione.</p>
+                 <button onClick={() => setIsSubmitted(false)} className="bg-slate-700 text-white font-semibold py-2 px-4 rounded-lg hover:bg-slate-800 transition-colors">
+                    Invia un'altra richiesta
+                </button>
+            </div>
+        )
     }
 
     return (
-        <WidgetCard title="Richiesta Ferie/Assenze" icon={<CalendarIcon className="h-6 w-6 text-blue-500" />} showViewAll={false}>
-            <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                    <label className="block text-sm font-medium text-gray-700">Tipo di richiesta</label>
-                    <select value={type} onChange={e => setType(e.target.value as LeaveType)} className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
-                        <option>Holiday</option>
-                        <option>Sick Leave</option>
-                    </select>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label htmlFor="start-date" className="block text-sm font-medium text-gray-700">Data Inizio</label>
-                        <input type="date" id="start-date" value={startDate} onChange={e => setStartDate(e.target.value)} min={new Date().toISOString().split('T')[0]} className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"/>
-                    </div>
-                     <div>
-                        <label htmlFor="end-date" className="block text-sm font-medium text-gray-700">Data Fine</label>
-                        <input type="date" id="end-date" value={endDate} onChange={e => setEndDate(e.target.value)} min={startDate} className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"/>
-                    </div>
-                </div>
-                 <div>
-                    <label htmlFor="notes" className="block text-sm font-medium text-gray-700">Note (opzionale)</label>
-                    <textarea id="notes" value={notes} onChange={e => setNotes(e.target.value)} rows={3} className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"></textarea>
-                </div>
-                <button type="submit" className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">Invia Richiesta</button>
-            </form>
-        </WidgetCard>
-    )
-};
-
-const MyRequestsWidget: React.FC<{ requests: HolidayRequest[] }> = ({ requests }) => {
-    const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-
-    return (
-        <WidgetCard title="My Requests" icon={<BriefcaseIcon className="h-6 w-6 text-purple-500" />} showViewAll={false}>
-            <div className="space-y-3 max-h-60 overflow-y-auto">
-                {requests.length > 0 ? requests.map(req => (
-                    <div key={req.id} className="p-3 bg-gray-50 rounded-lg border border-gray-200 flex items-center space-x-3">
-                        <div className={`flex-shrink-0 h-10 w-10 rounded-full flex items-center justify-center ${req.type === 'Holiday' ? 'bg-blue-100 text-blue-600' : 'bg-pink-100 text-pink-600'}`}>
-                            {req.type === 'Holiday' ? <BriefcaseIcon className="h-5 w-5"/> : <HeartIcon className="h-5 w-5"/>}
+        <div className="p-8">
+            <h1 className="text-3xl font-bold text-slate-900 mb-8">Richiesta Ferie e Permessi</h1>
+            
+            <div className="max-w-4xl mx-auto">
+                <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label htmlFor="start-date" className="block text-sm font-medium text-slate-700">Dal giorno/ora</label>
+                            <input
+                                type="datetime-local"
+                                id="start-date"
+                                value={startDate}
+                                onChange={e => setStartDate(e.target.value)}
+                                required
+                                className="mt-1 block w-full p-2 border border-slate-300 rounded-lg shadow-sm focus:ring-slate-500 focus:border-slate-500"
+                            />
                         </div>
-                        <div className="flex-1">
-                            <p className="font-semibold text-sm text-gray-800">{req.type}</p>
-                            <p className="text-xs text-gray-500">{formatDate(req.startDate)} - {formatDate(req.endDate)}</p>
+                        <div>
+                            <label htmlFor="end-date" className="block text-sm font-medium text-slate-700">Al giorno/ora</label>
+                            <input
+                                type="datetime-local"
+                                id="end-date"
+                                value={endDate}
+                                onChange={e => setEndDate(e.target.value)}
+                                min={startDate}
+                                required
+                                className="mt-1 block w-full p-2 border border-slate-300 rounded-lg shadow-sm focus:ring-slate-500 focus:border-slate-500"
+                            />
                         </div>
-                         <span className="text-xs font-medium text-green-700 bg-green-100 px-2 py-0.5 rounded-full">{req.status}</span>
                     </div>
-                )) : (
-                    <p className="text-center text-gray-500 text-sm py-4">You haven't made any requests yet.</p>
-                )}
-            </div>
-        </WidgetCard>
-    );
-};
+                    <div className="mt-6">
+                        <label className="block text-sm font-medium text-slate-700">Tipo di richiesta</label>
+                        <div className="mt-2 flex space-x-4">
+                            <label className="inline-flex items-center">
+                                <input type="radio" className="form-radio text-slate-600" name="requestType" value="ferie" checked={requestType === 'ferie'} onChange={() => setRequestType('ferie')} />
+                                <span className="ml-2">Ferie</span>
+                            </label>
+                            <label className="inline-flex items-center">
+                                <input type="radio" className="form-radio text-slate-600" name="requestType" value="permessi" checked={requestType === 'permessi'} onChange={() => setRequestType('permessi')} />
+                                <span className="ml-2">Permessi</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div className="mt-8 text-right">
+                        <button type="submit" className="bg-slate-700 text-white font-semibold py-2 px-6 rounded-lg hover:bg-slate-800 transition-colors disabled:bg-slate-300" disabled={!startDate || !endDate}>
+                            Invia Richiesta
+                        </button>
+                    </div>
+                </form>
 
-export const HolidaysPage: React.FC<{ initialRequests: HolidayRequest[] }> = ({ initialRequests }) => {
-    const [requests, setRequests] = useState(initialRequests);
-    
-    const handleAddRequest = (newRequest: HolidayRequest) => {
-        setRequests(prev => [...prev, newRequest]);
-    };
-
-    const myRequests = useMemo(() => {
-        return requests.filter(r => r.userName === 'Alex Chen').sort((a,b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
-    }, [requests]);
-
-    return (
-        <div className="container mx-auto">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">Gestione Ferie e Permessi</h1>
-            <p className="text-gray-500 mb-8">Invia una nuova richiesta o visualizza il calendario del team.</p>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-1 space-y-6">
-                    <RequestForm onSubmit={handleAddRequest} />
-                    <MyRequestsWidget requests={myRequests} />
-                </div>
-                <div className="lg:col-span-2">
-                    <HolidaysCalendar requests={requests} />
-                </div>
+                <CalendarPreview startDate={startDate} endDate={endDate} allRequests={MOCK_HOLIDAY_REQUESTS} />
+                <PastRequestsTable />
             </div>
         </div>
     );
